@@ -1,0 +1,309 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Sign In | ReelMatch</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-on-surface": "#313030",
+              "on-secondary-fixed-variant": "#8e1210",
+              "inverse-primary": "#c0000c",
+              "primary-fixed": "#ffdad5",
+              "error-container": "#93000a",
+              background: "#131313",
+              "surface-container-low": "#1c1b1b",
+              "primary-container": "#e50914",
+              "surface-container-high": "#2a2a2a",
+              primary: "#ffb4aa",
+              "on-primary-fixed": "#410001",
+              tertiary: "#a7c8ff",
+              "on-error": "#690005",
+              "surface-bright": "#3a3939",
+              outline: "#af8782",
+              "on-secondary-container": "#ff9f93",
+              "on-tertiary-fixed-variant": "#004689",
+              "surface-container": "#201f1f",
+              "on-secondary": "#690003",
+              surface: "#131313",
+              "on-primary-fixed-variant": "#930007",
+              "on-surface": "#e5e2e1",
+              "inverse-surface": "#e5e2e1",
+              "surface-container-highest": "#353534",
+              "secondary-container": "#921512",
+              "on-background": "#e5e2e1",
+              "secondary-fixed": "#ffdad5",
+              "tertiary-fixed": "#d5e3ff",
+              "surface-dim": "#131313",
+              "tertiary-container": "#0072d7",
+              error: "#ffb4ab",
+              "on-primary-container": "#fff7f6",
+              "surface-tint": "#ffb4aa",
+              "on-primary": "#690003",
+              "surface-container-lowest": "#0e0e0e",
+              secondary: "#ffb4aa",
+              "on-tertiary-container": "#f8f9ff",
+              "primary-fixed-dim": "#ffb4aa",
+              "secondary-fixed-dim": "#ffb4aa",
+              "on-error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#a7c8ff",
+              "surface-variant": "#353534",
+              "on-tertiary": "#003061",
+              "outline-variant": "#5e3f3b",
+              "on-tertiary-fixed": "#001b3c",
+              "on-surface-variant": "#e9bcb6",
+              "on-secondary-fixed": "#410001",
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "0.75rem",
+            },
+            fontFamily: {
+              headline: ["Manrope"],
+              body: ["Be Vietnam Pro"],
+              label: ["Inter"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .cinematic-overlay {
+        background: linear-gradient(
+          to top,
+          rgba(19, 19, 19, 0.9) 0%,
+          rgba(19, 19, 19, 0.4) 50%,
+          rgba(19, 19, 19, 0.8) 100%
+        );
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container"
+  >
+    <!-- Hero Background with Cinematic Imagery -->
+    <div class="fixed inset-0 z-0 overflow-hidden">
+      <img
+        alt=""
+        class="w-full h-full object-cover scale-105"
+        data-alt="wide shot of a dark moody empty cinema theater with plush red seats and a glowing silver screen casting dramatic shadows"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz8LJh3Ba8INECTPowNfLIiXQxtSwZxrmPMcW768F6fe74d6SISS_rGRrOxVnWOCoU6up7tEyVlMzEaMhnb7bJhzyBz8pQLBtPNbq_KifNsSDVnYZD3dRHFqSTWRkRsGGyV5lW9J4Wab7ZWJ822SgaeP22keE2wIy2lu6C2hPGnpBkPWZ8jmfa9MR4CRGLDuUTFLHsoUbzwtMlbtKlwVQmqwCcrzO6Q4u50EkrXThc53scf94gk4KeAN-595ANV4fOMJvxvNWcdoEc"
+      />
+      <div class="absolute inset-0 cinematic-overlay"></div>
+    </div>
+    <!-- Header / Branding -->
+    <header
+      class="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-6 w-full bg-transparent backdrop-blur-xl bg-opacity-70"
+    >
+    <a href="{% url 'index' %}" class="text-2xl font-black text-red-600 tracking-tighter font-headline uppercase">
+      ReelMatch
+    </a>
+    </header>
+    <!-- Main Content Canvas -->
+    <main
+      class="relative z-10 flex min-h-screen items-center justify-center px-6 pt-24 pb-12"
+    >
+      <!-- Login Card -->
+      <div
+        class="w-full max-w-[450px] bg-surface-container-lowest/80 backdrop-blur-3xl p-8 md:p-16 rounded-xl border border-outline-variant/10 shadow-2xl"
+      >
+        <h1
+          class="text-3xl font-extrabold text-on-surface mb-8 font-headline tracking-tight"
+        >
+          Sign In
+        </h1>
+        <form id="siginform" class="space-y-4">
+          <!-- Email/Mobile Field -->
+          <div class="space-y-1">
+            <div class="relative group">
+              <input
+                class="peer w-full bg-surface-container-highest border-b-2 border-transparent px-4 pt-6 pb-2 text-on-surface focus:outline-none focus:border-primary transition-all duration-300 rounded-lg"
+                id="username"
+                placeholder=" "
+                type="text"
+                required
+              />
+              <label
+                class="absolute left-4 top-4 text-zinc-500 text-sm font-medium transition-all duration-300 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary-fixed-dim peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs"
+                for="username"
+              >
+                Username
+              </label>
+            </div>
+          </div>
+          <!-- Password Field -->
+          <div class="space-y-1">
+            <div class="relative group">
+              <input
+                class="peer w-full bg-surface-container-highest border-b-2 border-transparent px-4 pt-6 pb-2 text-on-surface focus:outline-none focus:border-primary transition-all duration-300 rounded-lg"
+                id="password"
+                placeholder=" "
+                type="password"
+                required
+              />
+              <label
+                class="absolute left-4 top-4 text-zinc-500 text-sm font-medium transition-all duration-300 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary-fixed-dim peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs"
+                for="password"
+              >
+                Password
+              </label>
+            </div>
+          </div>
+            <p id="error-text" class="text-red-500 text-xs hidden"></p>
+          <!-- Action Button -->
+          <button
+                  id="submitBtn"
+            class="w-full bg-primary-container text-on-primary-container font-extrabold py-3.5 rounded-lg hover:opacity-90 active:scale-95 transition-all duration-200 mt-6 shadow-lg shadow-primary-container/20"
+            type="submit"
+          >
+            Sign In
+          </button>
+          <!-- Secondary Actions -->
+          <div class="flex items-center justify-between mt-4">
+            <label class="flex items-center space-x-2 cursor-pointer group">
+              <div
+                class="relative flex items-center justify-center w-5 h-5 bg-surface-container-high rounded border border-outline-variant group-hover:border-primary transition-colors"
+              >
+                <input class="peer hidden" type="checkbox" />
+                <span
+                  class="material-symbols-outlined text-xs text-on-primary scale-0 peer-checked:scale-100 transition-transform"
+                  >check</span
+                >
+              </div>
+              <span class="text-zinc-400 text-xs font-label">Remember me</span>
+            </label>
+            <a class="text-zinc-400 text-xs font-label hover:underline" href="#"
+              >Forgot password?</a
+            >
+          </div>
+        </form>
+        <!-- Footer of Card -->
+        <div class="mt-12 space-y-4">
+          <div class="flex items-center space-x-1.5">
+            <span class="text-zinc-500 font-label">New to ReelMatch?</span>
+            <a class="text-on-surface font-bold hover:underline" href="{% url 'signup' %}"
+              >Sign up now.</a
+            >
+          </div>
+          <p class="text-[10px] text-zinc-600 leading-relaxed font-label">
+            This page is protected by Google reCAPTCHA to ensure you're not a
+            bot.
+            <button class="text-tertiary-container hover:underline ml-1">
+              Learn more.
+            </button>
+          </p>
+        </div>
+      </div>
+    </main>
+    <!-- Global Footer -->
+    <footer
+      class="relative z-10 w-full py-12 flex flex-col items-center justify-center space-y-6 w-full bg-zinc-950/80 backdrop-blur-md"
+    >
+    <div class="text-lg font-black text-red-600 font-headline uppercase">
+      ReelMatch
+    </div>
+      <div class="flex flex-wrap justify-center gap-x-8 gap-y-4 px-6">
+        <a
+          class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-zinc-500 hover:text-zinc-200 transition-colors duration-200"
+          href="#"
+          >FAQ</a
+        >
+        <a
+          class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-zinc-500 hover:text-zinc-200 transition-colors duration-200"
+          href="#"
+          >Help Center</a
+        >
+        <a
+          class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-zinc-500 hover:text-zinc-200 transition-colors duration-200"
+          href="#"
+          >Privacy Policy</a
+        >
+        <a
+          class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-zinc-500 hover:text-zinc-200 transition-colors duration-200"
+          href="#"
+          >Terms of Use</a
+        >
+      </div>
+      <p
+        class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-zinc-500 mt-4"
+      >
+        © 2024 ReelMatch. All Rights Reserved.
+      </p>
+    </footer>
+
+<script>
+  // Changed this ID to match your HTML form id="siginform"
+  document.getElementById('siginform').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorText = document.getElementById('error-text');
+    const submitBtn = document.getElementById('submitBtn');
+
+    errorText.classList.add('hidden');
+    submitBtn.innerText = "Authenticating...";
+    submitBtn.disabled = true;
+
+    try {
+      const response = await fetch('/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}' // This tells Django the request is safe
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // We save the "Role" sent from views.py
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('is_staff', data.is_staff);
+        localStorage.setItem('username', data.username);
+
+        // JavaScript handles the move to the page served by your homeFeed view
+        window.location.href = '/homeFeed/';
+      } else {
+        errorText.innerText = data.error || "Login failed.";
+        errorText.classList.remove('hidden');
+      }
+    } catch (err) {
+      errorText.innerText = "Connection error. Is the server running?";
+      errorText.classList.remove('hidden');
+    } finally {
+      submitBtn.innerText = "Sign In";
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ReelMatch — Find Your Next Favorite Film</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Be+Vietnam+Pro:wght@400;500;700&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary": "#690003", "surface-bright": "#3a3939", "on-surface": "#e5e2e1",
+              "error-container": "#93000a", "surface-variant": "#353534", "on-secondary-container": "#ff9f93",
+              "inverse-on-surface": "#313030", "on-tertiary-container": "#f8f9ff", "on-secondary-fixed": "#410001",
+              "surface-dim": "#131313", "tertiary-container": "#0072d7", "on-tertiary-fixed-variant": "#004689",
+              "primary-fixed": "#ffdad5", "surface-container-lowest": "#0e0e0e", surface: "#131313",
+              background: "#131313", "inverse-primary": "#c0000c", "surface-container": "#201f1f",
+              "primary-container": "#e50914", "secondary-fixed-dim": "#ffb4aa", error: "#ffb4ab",
+              "secondary-fixed": "#ffdad5", "on-primary-fixed": "#410001", "surface-container-low": "#1c1b1b",
+              "secondary-container": "#921512", "on-secondary": "#690003", outline: "#af8782",
+              "on-error-container": "#ffdad6", "on-secondary-fixed-variant": "#8e1210",
+              "tertiary-fixed": "#d5e3ff", "tertiary-fixed-dim": "#a7c8ff", "on-tertiary-fixed": "#001b3c",
+              "inverse-surface": "#e5e2e1", "surface-container-high": "#2a2a2a", primary: "#ffb4aa",
+              "primary-fixed-dim": "#ffb4aa", "on-error": "#690005", "surface-tint": "#ffb4aa",
+              "on-surface-variant": "#e9bcb6", "on-background": "#e5e2e1", "on-tertiary": "#003061",
+              "on-primary-container": "#fff7f6", "on-primary-fixed-variant": "#930007",
+              "outline-variant": "#5e3f3b", "surface-container-highest": "#353534",
+              tertiary: "#a7c8ff", secondary: "#ffb4aa",
+            },
+            borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
+            fontFamily: { headline: ["Manrope"], body: ["Be Vietnam Pro"], label: ["Inter"] },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+      .hero-gradient {
+        background: linear-gradient(to top, rgba(19,19,19,1) 0%, rgba(19,19,19,0.7) 40%, rgba(19,19,19,0.7) 60%, rgba(19,19,19,1) 100%);
+      }
+    </style>
+  </head>
+  <body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <!-- Nav -->
+    <nav class="bg-transparent backdrop-blur-md top-0 sticky z-50">
+      <div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+        <div class="text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">ReelMatch</div>
+        <div class="flex items-center gap-4">
+          <a href="{% url 'signin' %}" class="text-on-surface hover:text-primary px-4 py-2 font-bold font-body transition-colors">Sign In</a>
+          <a href="{% url 'signup' %}" class="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-bold font-body hover:brightness-110 active:scale-95 transition-all">Get Started</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <main class="relative min-h-screen flex flex-col items-center justify-center -mt-20 overflow-hidden">
+      <!-- Poster grid background -->
+      <div class="absolute inset-0 z-0 overflow-hidden scale-110">
+        <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 opacity-30 grayscale blur-[2px]">
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDo5ihN0-pJVIjvLsCB5oCBpDeyT5jgWfXT7H4EknGbqxsSEuyubq-AMqsHgf6uxOufjueVUB2F4-xdFxyfc0OSquha19KFaryav7kZzlUkJYNevuFffrFtsgVRHur981eLZxWqMk2QbzugkzuGr9f435SMYzsPfeBWgsFnIJtl4kPK4Jz5BCGMWIAu5naHRjGxpIwKSocFQov_SupzXHB4Ixv6W6TcwCoAe28lVz3KZZiVCSo-c3UYnDJLDu3ZBX4kmHQQk7ygCkLJ" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaPNAQFp-Q6AM10muMpamVS72ycUY2knhhc4dwVRUN6ns1LUWdoh3WvqcS7bB_FoSoYy2Bw-K-_M98sMCe7y0iYIdG_XTIMVQFx-WET1wF7J20zoB1ALS0u3h3WyRqDHosmxPF5-s3C50nBpP54XobzEyL96BJXRbOlS1mOtiEXCt6RxTDzg7KNNFKqWFKrXrjiEMSETHc9TNV1t34c05zxaGnK5kC_bQ4fsJ28Tebw9FQ3RYoVbC1M1u_vh7ICdy_FLRj6iRCrkLv" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvDP4DkUfpBoLwcmNfftq23XYH9h784iMdAxS8EIXKS2R4FwNcCRGcbLhNZwIfs89PK-cMgVr8RjIOteX9bBQnWnUpBwLT6szPbj2-7Yd-oGGRai_Fma2ZIhOKR6W4pGjJEqtSCdRWxms3FRLtw6mQC5gttD_htkezikvl6pyxLkY_HOdLw8A3FNfRUSc_prTCbv142X912k8FawoNox-fLO-r4Oa07KT0WKfdJZDSX-d8tROxalM8kWeMs334JDJKFftfQfYR1NEa" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiRRNj66Qye7jd2pnqtSJDV3h90CGRaW88inSjllfWxPY0vvz3NQfriuuayb0O61i_R0QMrLLCohTg4TWcJb93KeTQG9v3kmc_-ewTVZpHghybmvSUVohradvRJiTa02ZeEtjQoPlpkMjpOFofm3hfEZBnYG1Z1isAJIi2RUGbIXa_1XL_EIbIZYVM_E0PNowUQ2fiVnMWYBf4OuytGvBXWzW7bEUaXN0mjI96YLHZADbODwl3np9nuKO3QaoADguc_xCNoMVnEgkf" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA3MwJ35_MDW3Uui-7zAqHslf-qI-BHidRVVn_hJw1a9_zBCwMkZElGk5oJrOesc67OnnuwWM7hJ573FxcUFOti4sp7v1C1PYQZ0dNwYrhd_jwDquuASCbl1sKUsedtVHFzuAv7ItTyNAsat2tD-wjtjpuA--hb3yx6sExCL2aF1wo2ZQlpJzFhdZY3hdRa9mJ1npnghShh0RoaXWM0fZkwtTW7L7IAv44BUJqyEb0uoU71CQwsqURDFLglVy6k74qjGK1fH3-ehu-" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAngwMFGi70rlSqfDR7xYc1DfZyW5tPiSViAth_lkMf_tO5aZpMCptN8i73usUh5s0PQNOoCoY0rSmoFqHmpozSRBK5riHSqknuiBwB-j6d9jvP5Te_wdyCqnvRiLmGAtxEUp_rAboX0fb2axfSB_DKJ1Z41tvkd_OXebTLhKhv0Xmt7Z7kEL6kU-S3Hl3x5uacywIuJwRP99XrffNsFI4dF8yIb9qUqxAqh9uslwHf2ndCzglI2O5CsQ41UbxspapDCT7HEuS6knrK" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa40NmKwEqUDacgG_glR1GEKsk5Ru5UWTdAI0pwfb4JsyObak2olgv9bRtDYr9rim9IDFeZr_jiscutuQ7WvC4yFCTJ0v8dszYp8pl4yjwXyB_Xpd2Mb8v2lz9tCA4Sh69eK2h3WWlT9_iYKApNQpXyLjHofQoTmUkHPAPhVWgHNvBlPnvAEn-6pATkEps-Sr2bEBXSDXagOTjTWE51dysaUgAhyS8ZxDksfbaRPejlqcmZe_OKZRux9BM7FCavR8BRSsFn7DGLbj9" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUlLBPmgCUfjwQw-Vdvx6PiWHjISHuBUAtpuInQO8X7FBcK9JAd81l4e7z1F6OirLonOvftjbQM5Xwn0YUoPmuAjdAfOgyNf8yhtmm8iCNMS1CXzmyFplHgibU3PfXR5CqEjQsOF8qEOrtcgcLezHlgWzmLLd8sRCHTRjYSI0Xs4cCBi1N18QKD3EQIFt7WPArywStbj3EADUb5jprUuqIKjEsSXCwByFsjp76_Hkblfx8sn6WrmcWLVSqyAysEf3qc16mz4TF2gU" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvfIGhRvu77o19ZX9oj8-jef3EVcnGq8-YXmGyFDQ_6oAVx1LP5w4pNYj9lkzG_piW_qWzqDgN_DIM-edayH84mYxx-TkvDoPb3HIxYpgsh9Rmis-Gu33WgT470ZckLrFacYywI631aKB14a7ihyDCKGva1f_ZKh69K09piUjk8Sndw2M2d-L2837rKm7n0Dr44loGSiizOAG88sG8n5fgH91Ww2ab_xL2FYgTXJMbfM8MsbXUxSmFyrW6DCGMfepsnp7VYxrgMByJ" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMShaWVsAg0qhPW_ntoiFIg7S1_GDWl8ZUH4BHq5UwrWPh1prmM-PDrukFKF93ulYIXG1vs8z-2mdP0xlun8HAf8gDaZzEwRjpCdx2_kGP29G3m3XsrBVLo7koSwwSIqes33MNsZW0dATh9eMjqHSCUzZODWZH9BzgNDunSHo1pos9C27LfgZApVjUPYZzMbLeOL-XfpP_p5zz9GJxp8gFTIVVxh6kaXRMRK4P9YlezqwneqSzmN5YB1tIvAca6xqk9QsVkXgRvbV9" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDYRV97w2RT-w-iILxfAiMA4bxsgT6p3ppZq2G11IbqlCgDOorU5_awfoDo7blDgKtqYN9er5IiIcYgD27yzeyZeA8ZnHr6prAYILhAhbLiqVHzodm-Whz7PisTMuDgym6VvJNjMLV_vTA9UQxZqcTz0C4tPuhPn0zrabGMvJS631meJ0j8g2Nt2Bhnx9uNQadBZryvkDrBx_8nvhCpXI1R2Yooya2vxtU2pRW8jD-dy7W7cNA_67XfM2MSiMWgBfSdcWs8gp15TTX" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9WexZa0gy8eGlob1lqb2HEQ0Etw5yaAKorGZ1t1oFNzf9eEdLD2whXTLTD5OGu39R1cwAr5T9E0w1rb8J0z-aG47VunWd-QAkeaKYH9w8xzY7mHCz_gyePXy54YwxQ1xWKnB5cZi4mN414oaPwBPeUoRwEN_-K81yn1dbINisiNqAjCEJIEJKciZjGRCAo-qc4ZMvjX3iFw3SKOWi9x7ZlD14s8szgYdW-VAyLwo1Lc302iD1tFZlxiGLzLiyD2lXw57U2PyHC4Xj" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoBnLH7GVNYKQPFbLitHR9UECKhiOwMuQ1RtOHiEaMIxZJXR5L4_R5kKISCFja78armKjsdEiiGuXMzzLI6nTMMCsomVMH2gMobFO3PGB8PnROgOyqGf3lT_lzdv0DsvJ_qrXN2PJGdnr0ePU4CRiGJxTs4x47aTf7pX1Uk_GzMM4kxiWByyG0z0ccYOjmvWfxX5McsDyqOPBKbFif0GWfkdViaERlebvk7fyD4vW2IB0LLiPMcZrhVSiz8jbWTE-GOSK-HWYMs2iC" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAp5OqQNOAApvEZexQJOwfsDJDPq0zxKX0zQdj8aG11fJ15pICK-QsnF5mrH51WxOQatA8EX9ndQsBkxkvRBntucjxt5aIt2o65ojwqIHYqAsTjjWeTW5RBbHb7mVSwWSlzVytxdDbEerRDZr0i8O0E5ZUVyQQ9MGfn9Z7sVGKSQUaPj1-VNakrlP1gKsAvz2XzA5gE1hpxZBihAMf3eP7ciLSIX2cCSkpMZfyIhVaqxbaQqApUnm-Qr4CdnEXS034foDUiTsvsS7J0" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLZymw4wXSJ57lFWDKi28XYEcG7dr2aTGLWotoBNiqsr-5r1Y36eao1dmqc7DftPyuw2wsCkYPHLNZkR_8xlkv4uHn-Ih7Yld3dgR6_O0VfmVb7il_3ZFlCjifsrHliUotJHCpkkHHdqXE4Kgwgk-OghQQ6r633aLzdxp8MQqhDQgOUv3kw_YZBoj4V9oG2QtgHbz63LnsibrdfpKogdVn-iqDTiBnxlYPSe739fU613bkRWSx2xgejSDfrr2QZ4PI4BC_nWJrF98p" />
+          <img class="w-full aspect-[2/3] object-cover rounded-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYrtnRLVa2YL9pnSccwu4FA43flThC-6Lhin_vEmZgKzrnSQgFLTLpkR1cvNWNi4wt1xJb6yy99Tid90PTwGDEBea-CmXjTNtHAeGuWa3Rvo-o62DHxVMKgtSQ6LHmU-Q0yjEj9c75Lwxjv9ZCvL0975YOcVYm4yh2a8lA0A3rAW4wi52WjcU-2TE2kakaAau8maza6pH2k0u-RBKKLjdbvyTZ5KIT69afn-exgiNu8z1xSWOabe6ueG8MBt4d3dQ3SY2ue5JC-WOg" />
+        </div>
+        <div class="hero-gradient absolute inset-0"></div>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="relative z-10 w-full max-w-4xl px-6 text-center">
+        <span class="inline-block text-primary-container font-label text-xs uppercase tracking-widest mb-4 bg-primary-container/10 px-4 py-1 rounded-full">AI-Powered Movie Recommendations</span>
+        <h1 class="font-headline font-extrabold text-5xl md:text-7xl tracking-tighter text-on-surface mb-6 leading-tight">
+          Your next favorite<br/>film is one click away.
+        </h1>
+        <p class="font-body text-lg md:text-xl text-on-surface/70 mb-10 max-w-xl mx-auto">
+          ReelMatch uses a trained recommendation model to find films you'll love — based on genres, directors, and cast from movies you already like.
+        </p>
+        <div class="flex justify-center gap-4 flex-wrap">
+          <a href="{% url 'signup' %}" class="bg-primary-container text-on-primary-container px-10 py-4 rounded-lg font-extrabold font-headline text-lg hover:brightness-110 hover:scale-105 active:scale-95 transition-all duration-300">
+            Get Started — It's Free
+          </a>
+          <a href="{% url 'signin' %}" class="border border-outline-variant text-on-surface px-10 py-4 rounded-lg font-bold font-headline text-lg hover:bg-surface-container active:scale-95 transition-all duration-300">
+            Sign In
+          </a>
+        </div>
+
+        <!-- Feature pills -->
+        <div class="flex justify-center flex-wrap gap-3 mt-12">
+          <div class="flex items-center gap-2 bg-surface-container/80 backdrop-blur px-4 py-2 rounded-full text-sm font-label text-on-surface/70">
+            <span class="material-symbols-outlined text-primary-container text-base">auto_awesome</span>
+            Content-Based AI Model
+          </div>
+          <div class="flex items-center gap-2 bg-surface-container/80 backdrop-blur px-4 py-2 rounded-full text-sm font-label text-on-surface/70">
+            <span class="material-symbols-outlined text-primary-container text-base">bookmark</span>
+            Personal Watchlist
+          </div>
+          <div class="flex items-center gap-2 bg-surface-container/80 backdrop-blur px-4 py-2 rounded-full text-sm font-label text-on-surface/70">
+            <span class="material-symbols-outlined text-primary-container text-base">movie</span>
+            Extensive Film Catalogue
+          </div>
+        </div>
+      </div>
+
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-1/2 bg-primary-container/10 blur-[120px] rounded-full pointer-events-none"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-950 py-10">
+      <div class="max-w-6xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="text-lg font-black text-neutral-500 font-headline uppercase">ReelMatch</div>
+        <div class="flex gap-8">
+          <a class="text-neutral-500 text-sm font-body hover:text-neutral-300 transition-all" href="#">FAQ</a>
+          <a class="text-neutral-500 text-sm font-body hover:text-neutral-300 transition-all" href="#">Privacy</a>
+          <a class="text-neutral-500 text-sm font-body hover:text-neutral-300 transition-all" href="#">Terms of Use</a>
+        </div>
+        <p class="text-xs text-neutral-600 font-label">© 2024 ReelMatch. All Rights Reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>

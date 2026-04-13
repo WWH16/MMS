@@ -1,0 +1,301 @@
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ReelMatch — Recommendations</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Be+Vietnam+Pro:wght@400;500;600&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#921512", "inverse-surface": "#e5e2e1", tertiary: "#a7c8ff",
+              "on-primary": "#690003", "on-tertiary-fixed": "#001b3c", "surface-bright": "#3a3939",
+              "primary-fixed": "#ffdad5", outline: "#af8782", "surface-variant": "#353534",
+              "surface-container": "#201f1f", "on-tertiary-fixed-variant": "#004689",
+              "primary-container": "#e50914", "primary-fixed-dim": "#ffb4aa",
+              "on-surface-variant": "#e9bcb6", "on-error-container": "#ffdad6",
+              "surface-dim": "#131313", "surface-tint": "#ffb4aa",
+              "surface-container-highest": "#353534", "on-secondary-fixed-variant": "#8e1210",
+              "on-secondary-fixed": "#410001", surface: "#131313", "on-secondary": "#690003",
+              "tertiary-container": "#0072d7", "on-primary-fixed": "#410001",
+              "error-container": "#93000a", error: "#ffb4ab", primary: "#ffb4aa",
+              "inverse-on-surface": "#313030", "tertiary-fixed": "#d5e3ff",
+              "on-surface": "#e5e2e1", "outline-variant": "#5e3f3b", secondary: "#ffb4aa",
+              "inverse-primary": "#c0000c", "surface-container-high": "#2a2a2a",
+              "on-primary-container": "#fff7f6", "on-error": "#690005",
+              "on-secondary-container": "#ff9f93", "secondary-fixed": "#ffdad5",
+              "on-tertiary-container": "#f8f9ff", "surface-container-lowest": "#0e0e0e",
+              "on-primary-fixed-variant": "#930007", "on-background": "#e5e2e1",
+              "secondary-fixed-dim": "#ffb4aa", "tertiary-fixed-dim": "#a7c8ff",
+              background: "#131313", "surface-container-low": "#1c1b1b", "on-tertiary": "#003061",
+            },
+            borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
+            fontFamily: { headline: ["Manrope"], body: ["Be Vietnam Pro"], label: ["Inter"] },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+      body { background-color: #131313; color: #e5e2e1; }
+    </style>
+  </head>
+  <body class="font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <!-- Nav -->
+    <nav class="bg-neutral-950/70 backdrop-blur-xl top-0 sticky z-50">
+      <div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+        <div class="flex items-center gap-12">
+          <a href="{% url 'homeFeed' %}" class="text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">ReelMatch</a>
+          <div class="hidden md:flex gap-8 items-center">
+            <a class="text-gray-400 font-medium font-body hover:text-white transition-colors" href="{% url 'homeFeed' %}">Browse</a>
+            <a class="text-gray-400 font-medium font-body hover:text-white transition-colors" href="{% url 'myList' %}">My List</a>
+            <a class="text-white font-bold border-b-2 border-red-600 pb-1 font-body" href="#">Recommendations</a>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="relative group">
+            <button class="scale-95 active:opacity-80 transition-all text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-3xl">account_circle</span>
+              <span class="material-symbols-outlined text-sm transition-transform group-hover:rotate-180">expand_more</span>
+            </button>
+            <div class="absolute right-0 mt-2 w-48 bg-surface-container-high backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
+              <div class="p-4 border-b border-white/5">
+                <p id="userDisplay" class="text-sm font-bold text-on-surface truncate">User</p>
+                <p class="text-[10px] uppercase tracking-widest text-neutral-500">Member</p>
+              </div>
+              <div class="p-2">
+                <button id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-container hover:bg-primary-container/10 rounded-lg transition-colors">
+                  <span class="material-symbols-outlined text-lg">logout</span>Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-screen-2xl mx-auto px-8 py-16 min-h-screen">
+
+      <!-- Seed Movie Card -->
+      <div id="seedSection" class="hidden mb-16">
+        <p class="text-neutral-500 font-label text-xs uppercase tracking-widest mb-4">Because you searched for</p>
+        <div id="seedCard" class="flex gap-6 items-start bg-surface-container-high rounded-xl p-6 max-w-2xl border-l-4 border-primary-container">
+          <img id="seedPoster" class="w-24 rounded-lg object-cover aspect-[2/3] bg-surface-container-low" src="" alt="" />
+          <div class="flex-1 min-w-0">
+            <h2 id="seedTitle" class="text-2xl font-headline font-extrabold text-on-surface tracking-tight mb-1"></h2>
+            <p id="seedMeta" class="text-neutral-500 text-xs font-label mb-3"></p>
+            <p id="seedOverview" class="text-on-surface/70 font-body text-sm leading-relaxed line-clamp-3"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Header -->
+      <div class="flex items-end justify-between mb-10">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-extrabold font-headline tracking-tighter text-on-surface">
+            Similar Movies
+          </h1>
+          <p id="resultSubtitle" class="text-neutral-500 font-label text-sm mt-1 uppercase tracking-widest">
+            Powered by ReelMatch AI
+          </p>
+        </div>
+        <a href="{% url 'homeFeed' %}" class="flex items-center gap-2 text-neutral-500 hover:text-white font-label text-sm transition-colors">
+          <span class="material-symbols-outlined text-base">arrow_back</span>
+          Back to Browse
+        </a>
+      </div>
+
+      <!-- Notice: Model not yet integrated -->
+      <div id="placeholderNotice" class="hidden mb-8 flex items-start gap-3 bg-surface-container-high border border-outline-variant/20 rounded-xl p-4 max-w-2xl">
+        <span class="material-symbols-outlined text-primary-container mt-0.5">info</span>
+        <div>
+          <p class="text-sm font-label text-on-surface font-medium">Recommendation model coming soon</p>
+          <p class="text-xs text-neutral-500 mt-0.5">Showing top-rated movies as a placeholder. The AI model will be integrated shortly.</p>
+        </div>
+      </div>
+
+      <!-- Results Grid -->
+      <div id="resultsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <!-- Skeleton loaders -->
+        <div class="aspect-[2/3] rounded-xl bg-surface-container-low animate-pulse"></div>
+        <div class="aspect-[2/3] rounded-xl bg-surface-container-low animate-pulse"></div>
+        <div class="aspect-[2/3] rounded-xl bg-surface-container-low animate-pulse"></div>
+        <div class="aspect-[2/3] rounded-xl bg-surface-container-low animate-pulse"></div>
+        <div class="aspect-[2/3] rounded-xl bg-surface-container-low animate-pulse"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="hidden py-24 text-center">
+        <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">movie_filter</span>
+        <p class="text-xl font-headline text-on-surface-variant">No recommendations found.</p>
+        <a href="{% url 'homeFeed' %}" class="text-primary-container hover:underline mt-2 inline-block font-label text-sm">Browse all movies</a>
+      </div>
+
+      <!-- Try Another -->
+      <div class="mt-20 bg-surface-container-high rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <h3 class="text-xl font-headline font-bold text-on-surface mb-1">Try another movie</h3>
+          <p class="text-neutral-500 font-body text-sm">Enter any title from the catalogue to get similar recommendations.</p>
+        </div>
+        <div class="flex gap-3 w-full md:w-auto">
+          <input id="newSearchInput" type="text" placeholder="e.g. Inception"
+            class="bg-surface-container-highest border-none rounded-xl py-3 px-4 text-sm font-label focus:ring-1 focus:ring-primary-container text-on-surface w-full md:w-64" />
+          <button onclick="searchNew()"
+            class="bg-primary-container text-on-primary-container px-6 py-3 rounded-xl font-headline font-bold text-sm hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
+            Find Similar
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-950 py-10 mt-12">
+      <div class="max-w-6xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <span class="text-lg font-black text-neutral-500 font-headline uppercase">ReelMatch</span>
+        <p class="text-xs text-neutral-600 font-label">© 2024 ReelMatch. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username') || 'User';
+        document.querySelectorAll('#userDisplay').forEach(el => el.innerText = username);
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                if (token) await fetch('/api/logout/', { method: 'POST', headers: { 'Authorization': `Token ${token}`, 'X-CSRFToken': getCookie('csrftoken') } });
+            } catch {}
+            localStorage.clear();
+            window.location.href = "{% url 'signin' %}";
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const title = params.get('title');
+        if (!title) {
+            showEmpty();
+            return;
+        }
+
+        await loadRecommendations(title, token);
+    });
+
+    function getCookie(name) {
+        let value = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => { const [k,v] = c.trim().split('='); if(k===name) value=decodeURIComponent(v); });
+        return value;
+    }
+
+    async function loadRecommendations(title, token) {
+        try {
+            const res = await fetch(`/api/recommend/?title=${encodeURIComponent(title)}`, {
+                headers: token ? { 'Authorization': `Token ${token}` } : {}
+            });
+
+            if (!res.ok) { showEmpty(); return; }
+
+            const data = await res.json();
+
+            // Render seed movie
+            if (data.seed) renderSeed(data.seed);
+
+            // Show placeholder notice (remove this block once pkl model is integrated)
+            document.getElementById('placeholderNotice').classList.remove('hidden');
+
+            if (!data.recommendations?.length) { showEmpty(); return; }
+
+            renderResults(data.recommendations, token);
+
+        } catch { showEmpty(); }
+    }
+
+    function renderSeed(movie) {
+        const year = movie.release_date ? movie.release_date.split('-')[0] : '';
+        const genre = Array.isArray(movie.genres_list) ? movie.genres_list.join(', ') : (movie.genres || '');
+        const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : 'N/A';
+
+        document.getElementById('seedPoster').src = movie.poster_url || '';
+        document.getElementById('seedPoster').alt = movie.title;
+        document.getElementById('seedTitle').textContent = movie.title;
+        document.getElementById('seedMeta').textContent = [genre, year, `⭐ ${rating}`].filter(Boolean).join(' • ');
+        document.getElementById('seedOverview').textContent = movie.overview || '';
+        document.getElementById('seedSection').classList.remove('hidden');
+        document.getElementById('resultSubtitle').textContent = `5 films similar to ${movie.title}`;
+    }
+
+    function renderResults(movies, token) {
+        const grid = document.getElementById('resultsGrid');
+        const watchlistIds = new Set(); // Will be populated if needed
+
+        grid.innerHTML = movies.map(movie => {
+            const poster = movie.poster_url || 'https://via.placeholder.com/500x750?text=No+Poster';
+            const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+            const genre = Array.isArray(movie.genres_list) ? movie.genres_list[0] : (movie.genres || '');
+            const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : 'N/A';
+
+            return `
+                <div class="group relative aspect-[2/3] rounded-xl overflow-hidden bg-surface-container-low transition-all duration-500 hover:scale-[1.03] hover:z-20">
+                    <img class="w-full h-full object-cover" src="${poster}" alt="${movie.title}" loading="lazy" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="absolute bottom-0 left-0 w-full p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 space-y-2">
+                        <p class="text-white font-headline font-bold truncate">${movie.title.toUpperCase()}</p>
+                        <p class="text-neutral-400 text-xs font-label">${genre} • ${year} • ⭐ ${rating}</p>
+                        <div class="flex gap-2">
+                            <button onclick="window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'"
+                                class="flex-1 py-2 rounded-lg font-headline font-bold text-xs bg-surface-bright/80 text-white hover:bg-surface-bright transition-all flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                                Find Similar
+                            </button>
+                            <button onclick="toggleWatchlist(this, ${movie.movie_id})" data-in-list="false"
+                                class="flex-1 py-2 rounded-lg font-headline font-bold text-xs bg-primary-container text-on-primary-container hover:brightness-110 transition-all">
+                                + Save
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function showEmpty() {
+        document.getElementById('resultsGrid').classList.add('hidden');
+        document.getElementById('emptyState').classList.remove('hidden');
+    }
+
+    function searchNew() {
+        const title = document.getElementById('newSearchInput').value.trim();
+        if (title) window.location.href = `/recommendations/?title=${encodeURIComponent(title)}`;
+    }
+
+    document.getElementById('newSearchInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') searchNew();
+    });
+
+    async function toggleWatchlist(btn, movieId) {
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = "{% url 'signin' %}"; return; }
+        const inList = btn.dataset.inList === 'true';
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+            const res = await fetch('/api/watchlist/', {
+                method: inList ? 'DELETE' : 'POST',
+                headers: { 'Authorization': `Token ${token}`, 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movie_id: movieId })
+            });
+            if (res.ok) {
+                const nowInList = !inList;
+                btn.dataset.inList = nowInList;
+                btn.textContent = nowInList ? '✓ Saved' : '+ Save';
+                btn.className = `flex-1 py-2 rounded-lg font-headline font-bold text-xs transition-all ${nowInList ? 'bg-surface-bright/80 text-on-surface' : 'bg-primary-container text-on-primary-container hover:brightness-110'}`;
+            }
+        } catch {} finally { btn.disabled = false; }
+    }
+    </script>
+  </body>
+</html>
