@@ -232,13 +232,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         finally { localStorage.clear(); window.location.href = "{% url 'signin' %}"; }
     });
 
+    let searchDebounce = null;
+    let allMovies = [];      // cache so we can restore on clear
+    let currentWatchlistIds = new Set();
+    let currentIsStaff = false;
+
     document.getElementById('searchInput').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        document.querySelectorAll('#movieGrid .movie-card').forEach(card => {
-            const title = card.dataset.title?.toLowerCase() || '';
-            const genre = card.dataset.genre?.toLowerCase() || '';
-            card.style.display = (title.includes(query) || genre.includes(query)) ? '' : 'none';
-        });
+        const query = e.target.value.trim();
+        clearTimeout(searchDebounce);
+
+        // Show loading state on grid
+        document.getElementById('movieCount').textContent = 'Searching...';
+
+        searchDebounce = setTimeout(async () => {
+            const token = localStorage.getItem('token');
+
+            if (!query) {
+                // Restore full list from cache — no extra API call
+                renderGrid(allMovies, currentWatchlistIds, currentIsStaff);
+                document.getElementById('movieCount').textContent = `${allMovies.length} Titles`;
+                return;
+            }
+
+            const results = await fetchMovies(token, query);
+            renderGrid(results, currentWatchlistIds, currentIsStaff);
+            document.getElementById('movieCount').textContent =
+                results.length ? `${results.length} results for "${query}"` : `No results for "${query}"`;
+        }, 300);
     });
 
     const [movies, watchlistIds] = await Promise.all([
@@ -248,9 +268,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!movies.length) return;
 
-    const topRated = [...movies].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+    // Cache for search restore
+    allMovies = movies;
+    currentWatchlistIds = watchlistIds;
+    currentIsStaff = isStaff;
 
-    // ← await here so TMDB backdrop actually loads
+    const topRated = [...movies].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
     await renderHero(topRated[0], watchlistIds, token);
     renderGrid(movies, watchlistIds, isStaff);
     document.getElementById('movieCount').textContent = `${movies.length} Titles`;
@@ -265,9 +288,12 @@ function getCookie(name) {
     return value;
 }
 
-async function fetchMovies(token) {
+async function fetchMovies(token, search = '') {
     try {
-        const res = await fetch('/api/movies/', {
+        const url = search
+            ? `/api/movies/?search=${encodeURIComponent(search)}`
+            : '/api/movies/';
+        const res = await fetch(url, {
             headers: token ? { 'Authorization': `Token ${token}` } : {}
         });
         return res.ok ? await res.json() : [];

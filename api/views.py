@@ -15,6 +15,7 @@ import requests
 from django.conf import settings
 
 from rest_framework.throttling import UserRateThrottle
+from django.db.models import Q
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -79,6 +80,13 @@ class MovieListView(APIView):
 
     def get(self, request):
         movies = Movies.objects.all().order_by('-vote_average')
+
+        search = request.GET.get('search', '').strip()
+        if search:
+            movies = movies.filter(
+                Q(title__icontains=search) | Q(genres__icontains=search)
+            )
+
         serializer = MovieSerializer(movies, many=True)
         return Response(serializer.data)
 
