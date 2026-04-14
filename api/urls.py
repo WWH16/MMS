@@ -13,6 +13,6 @@ urlpatterns = [
     path('watchlist/', views.my_list_view, name='api-watchlist'),
 
     path('logout/', LogoutView.as_view(), name='api_logout'),
-path('recommend/', views.recommend_view, name='api-recommend'),
-path('tmdb-backdrop/', views.tmdb_backdrop_view, name='api-tmdb-backdrop'),
+    path('recommend/', views.recommend_view, name='api-recommend'),
+    path('tmdb-backdrop/', views.tmdb_backdrop_view, name='api-tmdb-backdrop'),
 ]

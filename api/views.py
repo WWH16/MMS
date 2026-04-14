@@ -2,7 +2,7 @@ from movie_admin.models import Movies, Watchlist
 from .serializers import MovieSerializer, UserSerializer, WatchlistSerializer
 
 # api/views.py
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 import requests
 from django.conf import settings
+
+from rest_framework.throttling import UserRateThrottle
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -121,6 +123,7 @@ def my_list_view(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([UserRateThrottle])  # Apply rate limiting to this endpoint
 def recommend_view(request):
     title = request.query_params.get('title', '').strip()
     if not title:
@@ -164,6 +167,7 @@ def recommend_view(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([UserRateThrottle])
 def tmdb_backdrop_view(request):
     title = request.query_params.get('title', '').strip()
     if not title:
