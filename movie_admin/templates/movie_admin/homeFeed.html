@@ -258,6 +258,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderGrid(results, currentWatchlistIds, currentIsStaff);
             document.getElementById('movieCount').textContent =
                 results.length ? `${results.length} results for "${query}"` : `No results for "${query}"`;
+
+            // --- STRATEGY 1: AUTO-SCROLL TO RESULTS ---
+            // We target the section header so the user sees the "Browse Movies" title
+            const gridSection = document.getElementById('movieGrid').previousElementSibling;
+            if (gridSection) {
+                gridSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }, 300);
     });
 

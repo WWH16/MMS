@@ -58,7 +58,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'movie_admin': '100/minute',  # Adjust as needed
+        'user': '1000/minute',  # Adjust as needed
     }
 }
 
