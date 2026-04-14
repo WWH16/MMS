@@ -11,6 +11,8 @@ from django.contrib.auth import authenticate
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+import requests
+from django.conf import settings
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -158,3 +160,29 @@ def recommend_view(request):
         "seed": MovieSerializer(seed_movie).data,
         "recommendations": MovieSerializer(recommended, many=True).data
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tmdb_backdrop_view(request):
+    title = request.query_params.get('title', '').strip()
+    if not title:
+        return Response({"error": "title is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # We use settings.TMDB_API_KEY which now holds the value from .env
+        res = requests.get(
+            'https://api.themoviedb.org/3/search/movie',
+            params={'api_key': settings.TMDB_API_KEY, 'query': title},
+            timeout=5
+        )
+        data = res.json()
+        result = data.get('results', [])
+
+        if result and result[0].get('backdrop_path'):
+            backdrop_url = f"https://image.tmdb.org/t/p/original{result[0]['backdrop_path']}"
+            return Response({"backdrop_url": backdrop_url})
+
+        return Response({"backdrop_url": None})
+    except Exception:
+        return Response({"backdrop_url": None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -287,14 +287,17 @@ async function fetchWatchlistIds(token) {
 }
 
 async function fetchTMDBBackdrop(title) {
-    const TMDB_KEY = 'e80b33baba3ab3033b4d532f6c0c7b0f';
     try {
-        const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(title)}`);
+        const res = await fetch(`/api/tmdb-backdrop/?title=${encodeURIComponent(title)}`);
+        if (!res.ok) return null;
+
         const data = await res.json();
-        const result = data.results?.[0];
-        if (result?.backdrop_path) return `https://image.tmdb.org/t/p/original${result.backdrop_path}`;
-    } catch {}
-    return null;
+        // Our Django view returns {"backdrop_url": "..."}
+        return data.backdrop_url || null;
+    } catch (err) {
+        console.error("Backdrop fetch error:", err);
+        return null;
+    }
 }
 
 // ← now properly async
@@ -307,7 +310,9 @@ async function renderHero(movie, watchlistIds, token) {
 
     // Fetch widescreen backdrop — falls back to portrait poster
     const backdrop = await fetchTMDBBackdrop(movie.title);
-    document.getElementById('heroImg').src = backdrop || movie.poster_url || '';
+
+    // Cleaned up version:
+    document.getElementById('heroImg').src = backdrop || movie.poster_url || 'https://via.placeholder.com/1920x1080?text=No+Image+Available';
     document.getElementById('heroImg').alt = movie.title;
     document.getElementById('heroTitle').textContent = movie.title.toUpperCase();
     document.getElementById('heroOverview').textContent = movie.overview || '';
