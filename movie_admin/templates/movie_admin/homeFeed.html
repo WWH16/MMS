@@ -596,15 +596,22 @@ async function openModal(movie) {
     document.getElementById('modalTitle').textContent = movie.title.toUpperCase();
     document.getElementById('modalOverview').textContent = movie.overview || "No overview available.";
     document.getElementById('modalMeta').textContent = `${genre} • ${year} • ⭐ ${rating}`;
-    document.getElementById('modalImg').src = movie.poster_url;
+    const imgEl = document.getElementById('modalImg');
 
-    // Async fetch backdrop
+    // Show poster immediately (no blank / no flicker)
+    imgEl.src = movie.poster_url || 'https://via.placeholder.com/500x750?text=No+Image';
+
+    // Then try to upgrade to backdrop
     fetch(`/api/tmdb-backdrop/?title=${encodeURIComponent(movie.title)}`)
         .then(res => res.json())
         .then(data => {
-            if (data.backdrop_url) document.getElementById('modalImg').src = data.backdrop_url;
+            if (data.backdrop_url) {
+                imgEl.src = data.backdrop_url;
+            }
         })
-        .catch(() => {});
+        .catch(() => {
+            // keep poster if failed
+        });
 
     const wlBtn = document.getElementById('modalWatchlistBtn');
     if (wlBtn) {
