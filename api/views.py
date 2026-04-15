@@ -16,6 +16,7 @@ from django.conf import settings
 
 from rest_framework.throttling import UserRateThrottle
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -81,14 +82,25 @@ class MovieListView(APIView):
     def get(self, request):
         movies = Movies.objects.all().order_by('-vote_average')
 
+        # 1. Search Logic
         search = request.GET.get('search', '').strip()
         if search:
             movies = movies.filter(
                 Q(title__icontains=search) | Q(genres__icontains=search)
             )
+        # 2. Pagination Logic
+        page_number = request.GET.get('page', 1)
+        paginator = Paginator(movies, 24)  # 24 is better for grid layouts (divisible by 2, 3, 4, 6)
+        page_obj = paginator.get_page(page_number)
 
-        serializer = MovieSerializer(movies, many=True)
-        return Response(serializer.data)
+        serializer = MovieSerializer(page_obj.object_list, many=True)
+
+        return Response({
+            "results": serializer.data,
+            "has_next": page_obj.has_next(),
+            "total_pages": paginator.num_pages,
+            "current_page": page_obj.number
+        })
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -160,9 +172,8 @@ def recommend_view(request):
 
     # --- Temporary placeholder until model is integrated ---
     # Returns top-rated movies excluding the seed as stand-in results
-    try:
-        seed_movie = Movies.objects.get(title__iexact=title)
-    except Movies.DoesNotExist:
+    seed_movie = Movies.objects.filter(title__iexact=title).first()
+    if not seed_movie:
         return Response({"error": "Movie not found"}, status=404)
 
     recommended = Movies.objects.exclude(title__iexact=title).order_by('-vote_average')[:5]
