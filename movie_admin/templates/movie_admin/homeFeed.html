@@ -339,6 +339,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             hasNextPage = data.has_next;
 
             renderGrid(results, currentWatchlistIds, currentIsStaff);
+            document.getElementById('movieGrid')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+            });
             applyFilters();
 
             document.getElementById('loadMoreBtn').style.display = hasNextPage ? 'block' : 'none';
