@@ -4,7 +4,6 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-
 import dotenv
 
 # --- CONFIGURATION ---
@@ -13,7 +12,7 @@ TMDB_API_KEY = dotenv.get_key(dotenv.find_dotenv(), "TMDB_API_KEY")
 DB_PATH = r'S:\PERSONAL PROJECTS\MMS\db.sqlite3'
 IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
-MAX_WORKERS = 8
+MAX_WORKERS = 10  # Details endpoint is faster, we can bump this slightly
 BATCH_SIZE = 50
 REQUEST_TIMEOUT = 10
 MAX_RETRIES = 2
@@ -26,89 +25,63 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 session = requests.Session()
-session.params = {"api_key": TMDB_API_KEY}
-
+# We don't put api_key in session.params here because the URL structure is different
 db_lock = Lock()
 
 
-# ---------------------------------------------------------------------------
-# PHASE 1 — Identify missing posters
-# ---------------------------------------------------------------------------
-
 def load_pending(conn: sqlite3.Connection) -> list[tuple[int, str]]:
-    """Returns movies where poster_url is missing or contains junk values."""
     query = """
-        SELECT movie_id, title
-        FROM accounts_movies
-        WHERE poster_url IS NULL
-           OR poster_url = ''
-           OR poster_url = 'None'
-           OR poster_url = 'nan'
-           OR poster_url LIKE ' %'
-    """
+            SELECT movie_id, title
+            FROM accounts_movies
+            WHERE poster_url IS NULL
+               OR poster_url = ''
+               OR poster_url = 'None'
+               OR poster_url = 'nan' \
+            """
     cur = conn.execute(query)
     return cur.fetchall()
 
 
-def preview_missing(conn: sqlite3.Connection) -> list[tuple[int, str]]:
-    """
-    PHASE 1: Queries the DB and prints a summary of all movies
-    that are missing a poster. Returns the list for use in Phase 2.
-    """
-    movies = load_pending(conn)
-    total = len(movies)
-
-    if not movies:
-        log.info("✅ No missing posters found. Database is fully populated.")
-        return []
-
-    log.info(f"Found {total} movie(s) with no poster:\n")
-    print(f"  {'ID':<8} {'Title'}")
-    print(f"  {'-'*8} {'-'*40}")
-    for movie_id, title in movies:
-        print(f"  {movie_id:<8} {title}")
-
-    print(f"\n  Total: {total} movie(s) missing a poster.\n")
-    return movies
-
-
 # ---------------------------------------------------------------------------
-# PHASE 2 — Fetch and save posters
+# FIXED: Using /movie/{id} instead of /search/movie
 # ---------------------------------------------------------------------------
-
-def fetch_poster_url(movie_title: str) -> str | None:
-    """Calls TMDB search API and returns the poster URL for a movie title."""
-    url = "https://api.themoviedb.org/3/search/movie"
+def fetch_poster_by_id(movie_id: int) -> str | None:
+    """Calls TMDB movie details API using the ID."""
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}"
+    params = {"api_key": TMDB_API_KEY}
 
     for attempt in range(1, MAX_RETRIES + 2):
         try:
-            time.sleep(0.1)  # Gentle throttle per worker to avoid 429s
-            resp = session.get(url, params={"query": movie_title}, timeout=REQUEST_TIMEOUT)
+            # Direct ID lookup is much more reliable than text search
+            resp = session.get(url, params=params, timeout=REQUEST_TIMEOUT)
 
             if resp.status_code == 429:
                 retry_after = int(resp.headers.get("Retry-After", 5))
-                log.warning(f"Rate limited. Sleeping {retry_after}s...")
                 time.sleep(retry_after)
                 continue
 
+            if resp.status_code == 404:
+                return None  # ID truly doesn't exist on TMDB
+
             resp.raise_for_status()
-            results = resp.json().get("results")
-            if results:
-                poster_path = results[0].get("poster_path")
-                if poster_path:
-                    return f"{IMAGE_BASE_URL}{poster_path}"
+            data = resp.json()
+            poster_path = data.get("poster_path")
+
+            if poster_path:
+                return f"{IMAGE_BASE_URL}{poster_path}"
             return None
 
         except Exception as exc:
             if attempt > MAX_RETRIES:
-                log.error(f"Failed '{movie_title}' after {MAX_RETRIES} retries: {exc}")
+                log.error(f"Error ID {movie_id}: {exc}")
     return None
 
 
-def process_movie(movie_id: int, title: str) -> tuple[int, str | None]:
-    poster_url = fetch_poster_url(title)
+def process_movie(movie_id: int, title: str) -> tuple[int, str | None, str]:
+    # We pass title just for the log message
+    poster_url = fetch_poster_by_id(movie_id)
     status = "✅" if poster_url else "❌"
-    log.info(f"{status} {title}")
+    log.info(f"{status} [{movie_id}] {title}")
     return movie_id, poster_url
 
 
@@ -123,12 +96,8 @@ def flush_batch(conn: sqlite3.Connection, batch: list[tuple[str, int]]) -> None:
 
 
 def fetch_and_save(conn: sqlite3.Connection, movies: list[tuple[int, str]]) -> None:
-    """
-    PHASE 2: Fetches poster URLs from TMDB for all given movies
-    and saves them to the database in batches.
-    """
     total = len(movies)
-    log.info(f"Starting fetch for {total} movie(s) with {MAX_WORKERS} workers...\n")
+    log.info(f"Starting ID-based fetch for {total} movies...\n")
 
     found = skipped = 0
     pending_writes = []
@@ -136,7 +105,7 @@ def fetch_and_save(conn: sqlite3.Connection, movies: list[tuple[int, str]]) -> N
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = {
-            pool.submit(process_movie, mid, title): (mid, title)
+            pool.submit(process_movie, mid, title): mid
             for mid, title in movies
         }
 
@@ -165,30 +134,18 @@ def fetch_and_save(conn: sqlite3.Connection, movies: list[tuple[int, str]]) -> N
     log.info("---------------------------------------------------------")
 
 
-# ---------------------------------------------------------------------------
-# Main — Two-phase entry point
-# ---------------------------------------------------------------------------
-
 def main() -> None:
     conn = sqlite3.connect(DB_PATH)
-
     try:
-        # --- PHASE 1: Preview ---
-        movies = preview_missing(conn)
-
+        movies = load_pending(conn)
         if not movies:
+            log.info("✅ No missing posters found.")
             return
 
-        # --- Confirmation prompt ---
-        answer = input("Proceed to fetch posters for the above movies? [y/N]: ").strip().lower()
-        if answer != "y":
-            log.info("Aborted. No changes were made.")
-            return
-
-        # --- PHASE 2: Fetch & Save ---
-        print()
-        fetch_and_save(conn, movies)
-
+        log.info(f"Found {len(movies)} movies missing posters. First few: {movies[:3]}")
+        answer = input("Proceed with ID-based fetch? [y/N]: ").strip().lower()
+        if answer == "y":
+            fetch_and_save(conn, movies)
     finally:
         conn.close()
 
