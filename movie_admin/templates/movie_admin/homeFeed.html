@@ -80,7 +80,7 @@
           <div class="hidden md:flex gap-8 items-center">
             <a class="text-white font-bold border-b-2 border-red-600 pb-1 font-body" href="{% url 'homeFeed' %}">Browse</a>
             <a class="text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="{% url 'myList' %}">My List</a>
-            <a class="text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="#">Recommendations</a>
+            <a class="text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="{% url 'recommendations' %}">Recommendations</a>
             <!-- Only visible to staff — hidden by default, shown via JS -->
             <a id="addMovieLink" class="hidden text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="#">Add Movie</a>
           </div>

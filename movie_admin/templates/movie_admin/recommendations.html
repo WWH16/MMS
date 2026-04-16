@@ -96,7 +96,7 @@
       </div>
 
       <!-- Results Header -->
-      <div class="flex items-end justify-between mb-10">
+      <div id="resultsHeader" class="flex items-end justify-between mb-10">
         <div>
           <h1 class="text-4xl md:text-5xl font-extrabold font-headline tracking-tighter text-on-surface">
             Similar Movies
@@ -131,11 +131,20 @@
       </div>
 
       <!-- Empty state -->
-      <div id="emptyState" class="hidden py-24 text-center">
-        <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">movie_filter</span>
-        <p class="text-xl font-headline text-on-surface-variant">No recommendations found.</p>
-        <a href="{% url 'homeFeed' %}" class="text-primary-container hover:underline mt-2 inline-block font-label text-sm">Browse all movies</a>
+    <div id="emptyState" class="hidden py-32 text-center flex flex-col items-center justify-center">
+      <span class="material-symbols-outlined text-7xl text-primary-container mb-6 block animate-pulse">movie_filter</span>
+      <h2 class="text-3xl font-headline font-extrabold text-on-surface mb-2">Discover Your Next Favorite</h2>
+      <p class="text-neutral-500 font-body mb-10">Enter a movie title to discover similar films powered by AI.</p>
+
+      <div class="flex gap-3 w-full max-w-md">
+        <input id="promptSearchInput" type="text" placeholder="e.g. Interstellar"
+          class="bg-surface-container-highest border-none rounded-xl py-4 px-6 text-base font-label focus:ring-2 focus:ring-primary-container text-on-surface w-full shadow-2xl" />
+        <button onclick="searchFromPrompt()"
+          class="bg-primary-container text-on-primary-container px-8 py-4 rounded-xl font-headline font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg">
+          Search
+        </button>
       </div>
+    </div>
 
       <!-- Try Another -->
       <div class="mt-20 bg-surface-container-high rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -168,6 +177,7 @@
         const username = localStorage.getItem('username') || 'User';
         document.querySelectorAll('#userDisplay').forEach(el => el.innerText = username);
 
+        // Logout logic
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 if (token) await fetch('/api/logout/', { method: 'POST', headers: { 'Authorization': `Token ${token}`, 'X-CSRFToken': getCookie('csrftoken') } });
@@ -178,12 +188,52 @@
 
         const params = new URLSearchParams(window.location.search);
         const title = params.get('title');
-        if (!title) {
-            showEmpty();
+
+        // --- Task 1 & 2: Check params & Toggle UI ---
+        if (!title || title.trim() === "") {
+            showSearchPrompt();
             return;
         }
 
+        // --- Task 3 & 4: Load if title exists ---
         await loadRecommendations(title, token);
+    });
+
+    function showSearchPrompt() {
+        // Hide UI elements that shouldn't appear in "Search Mode"
+        document.getElementById('resultsHeader').classList.add('hidden');
+        document.getElementById('resultsGrid').classList.add('hidden'); // This hides the skeletons!
+        document.getElementById('seedSection').classList.add('hidden');
+        document.getElementById('placeholderNotice').classList.add('hidden');
+
+        // Hide footer search to prevent duplicate UI
+        const footerSearch = document.querySelector('.mt-20.bg-surface-container-high');
+        if (footerSearch) footerSearch.classList.add('hidden');
+
+        // Show and center the prompt
+        const emptyState = document.getElementById('emptyState');
+        emptyState.classList.remove('hidden');
+        emptyState.classList.add('flex');
+
+        document.getElementById('promptSearchInput').focus();
+    }
+
+    function searchFromPrompt() {
+        const val = document.getElementById('promptSearchInput').value.trim();
+        if (val) window.location.href = `/recommendations/?title=${encodeURIComponent(val)}`;
+    }
+
+    function searchNew() {
+        const title = document.getElementById('newSearchInput').value.trim();
+        if (title) window.location.href = `/recommendations/?title=${encodeURIComponent(title)}`;
+    }
+
+    // Global Enter Key Listener for both search boxes
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            if (document.activeElement.id === 'promptSearchInput') searchFromPrompt();
+            if (document.activeElement.id === 'newSearchInput') searchNew();
+        }
     });
 
     function getCookie(name) {
