@@ -60,7 +60,8 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-
+moviedb.sqlite3
+db(backup).sqlite3
 # Flask stuff:
 instance/
 .webassets-cache
