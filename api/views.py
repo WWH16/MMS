@@ -1,4 +1,4 @@
-from movie_admin.models import Movies, Watchlist
+from accounts.models import Movies, Watchlist
 from .serializers import MovieSerializer, UserSerializer, WatchlistSerializer
 
 # api/views.py

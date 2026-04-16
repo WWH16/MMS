@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 
     # app for movie management
-    'movie_admin',
+    'accounts',
 
     # api app
     'api',

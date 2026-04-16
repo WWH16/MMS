@@ -84,7 +84,7 @@ def process_movie(movie_id: int, title: str) -> tuple[int, str | None]:
 
 def load_pending(conn: sqlite3.Connection) -> list[tuple[int, str]]:
     cur = conn.execute(
-        "SELECT movie_id, title FROM movie_admin_movies WHERE poster_url IS NULL OR poster_url = ''"
+        "SELECT movie_id, title FROM accounts_movies WHERE poster_url IS NULL OR poster_url = ''"
     )
     return cur.fetchall()
 
@@ -93,7 +93,7 @@ def flush_batch(conn: sqlite3.Connection, batch: list[tuple[str, int]]) -> None:
     """Write a batch of (poster_url, movie_id) rows and commit."""
     with db_lock:
         conn.executemany(
-            "UPDATE movie_admin_movies SET poster_url = ? WHERE movie_id = ?",
+            "UPDATE accounts_movies SET poster_url = ? WHERE movie_id = ?",
             batch,
         )
         conn.commit()

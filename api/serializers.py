@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User # Add this import
-from movie_admin.models import Movies
+from accounts.models import Movies
 
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,8 +21,8 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-from movie_admin.models import Watchlist # If you moved Watchlist to api/models
-# OR from movie_admin.models import Watchlist
+from accounts.models import Watchlist # If you moved Watchlist to api/models
+# OR from accounts.models import Watchlist
 
 class WatchlistSerializer(serializers.ModelSerializer):
     movie_details = MovieSerializer(source='movie', read_only=True) # This sends the full movie object
