@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             if (token) await fetch('/api/logout/', {
                 method: 'POST',
-                headers: { 'Authorization': `Token ${token}`, 'X-CSRFToken': getCookie('csrftoken') }
+                headers: { 'Authorization': `Token ${token}` }
             });
         } catch (err) { console.error(err); }
         finally { localStorage.clear(); window.location.href = "{% url 'signin' %}"; }
@@ -723,10 +723,26 @@ async function fetchMovies(token, search = '', page = 1) {
 async function fetchWatchlistIds(token) {
     if (!token) return new Set();
     try {
-        const res = await fetch('/api/watchlist/', { headers: { 'Authorization': `Token ${token}` } });
+        const res = await fetch('/api/watchlist/', {
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         if (!res.ok) return new Set();
         const data = await res.json();
-        return new Set(data.map(item => item.movie));
+        // FIXED: Extract movie_id from the movie_details or movie field
+        return new Set(data.map(item => {
+            // Check if movie_details exists (from updated serializer)
+            if (item.movie_details) {
+                return item.movie_details.movie_id;
+            }
+            // Fallback to movie field (old serializer)
+            if (item.movie) {
+                return typeof item.movie === 'object' ? item.movie.movie_id : item.movie;
+            }
+            return null;
+        }).filter(id => id !== null));
     } catch (err) {
         console.error("Watchlist Fetch Error:", err);
         return new Set();

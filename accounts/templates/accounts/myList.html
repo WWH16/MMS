@@ -132,8 +132,12 @@
       </div>
     </footer>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
+<script>
+// PLACEHOLDER GOES HERE - FIRST LINE INSIDE SCRIPT
+const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 500 750\'%3E%3Cdefs%3E%3ClinearGradient id=\'g\' x1=\'0%25\' y1=\'0%25\' x2=\'100%25\' y2=\'100%25\'%3E%3Cstop offset=\'0%25\' stop-color=\'%231c1b1b\'/%3E%3Cstop offset=\'100%25\' stop-color=\'%232a2a2a\'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=\'500\' height=\'750\' fill=\'url(%23g)\'/%3E%3Cpath fill=\'%23e50914\' fill-opacity=\'0.08\' d=\'M180,320 L320,375 L180,430 L180,320 Z\'/%3E%3Ctext x=\'250\' y=\'500\' font-family=\'Inter, sans-serif\' font-size=\'14\' fill=\'%23af8782\' text-anchor=\'middle\' letter-spacing=\'4\' font-weight=\'300\'%3ENO POSTER%3C/text%3E%3C/svg%3E';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ... rest of your code
         const token = localStorage.getItem('token');
         if (!token) { window.location.href = "{% url 'signin' %}"; return; }
 
@@ -166,21 +170,40 @@
         return cookieValue;
     }
 
-    async function fetchWatchlist() {
-        const token = localStorage.getItem('token');
-        const loader = document.getElementById('loader');
-        if (loader) loader.remove();
-        try {
-            const response = await fetch('/api/watchlist/', {
-                headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (loader) loader.remove();
-                renderMovies(data);
+async function fetchWatchlist() {
+    const token = localStorage.getItem('token');
+    const grid = document.getElementById('movieGrid');
+
+    // Show loading state
+    grid.innerHTML = `
+        <div id="loader" class="col-span-full flex justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>`;
+
+    try {
+        const response = await fetch('/api/watchlist/', {
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json'
             }
-        } catch (error) { console.error("Error:", error); }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            renderMovies(data);
+        } else if (response.status === 401) {
+            // Token expired
+            localStorage.clear();
+            window.location.href = "{% url 'signin' %}";
+        } else {
+            console.error("Failed to fetch watchlist");
+            renderMovies([]);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        renderMovies([]);
     }
+}
 
 async function removeFromList(movieId) {
     if (!confirm('Remove this movie from your list?')) return;
@@ -202,7 +225,7 @@ async function removeFromList(movieId) {
         });
 
         if (response.ok || response.status === 204) {
-            // Refresh the page to show updated list
+            // Refresh the list
             fetchWatchlist();
         } else {
             const error = await response.json();
@@ -213,67 +236,71 @@ async function removeFromList(movieId) {
         alert("Network error. Please try again.");
     }
 }
+function renderMovies(watchlistItems) {
+    const grid = document.getElementById('movieGrid');
 
-    function renderMovies(watchlistItems) {
-        const grid = document.getElementById('movieGrid');
-
-        if (!watchlistItems || watchlistItems.length === 0) {
-            grid.innerHTML = `
-                <div class="col-span-full py-20 text-center">
-                    <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">movie_filter</span>
-                    <p class="text-xl font-headline text-on-surface-variant mb-2">Your list is empty.</p>
-                    <p class="text-neutral-500 font-body text-sm mb-6">Save movies from the browse page to build your taste profile.</p>
-                    <a href="{% url 'homeFeed' %}" class="bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-headline font-bold hover:brightness-110 transition-all inline-block">Browse Movies</a>
-                </div>`;
-            return;
-        }
-
-        const html = watchlistItems.map(item => {
-            const movie = item.movie_details;
-            const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
-            const poster = movie.poster_url || 'https://via.placeholder.com/500x750?text=No+Poster';
-            const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : '0.0';
-
-            return `
-                <div class="group cursor-pointer">
-                    <div class="aspect-[2/3] rounded-xl overflow-hidden mb-4 bg-surface-container-low relative transition-transform duration-500 ease-out group-hover:scale-[1.02]">
-                        <img src="${poster}" alt="${movie.title}" class="w-full h-full object-cover" />
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
-                            <button onclick="window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'"
-                                class="bg-primary-container text-on-primary-container w-full py-2 rounded-lg font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-1">
-                                <span class="material-symbols-outlined text-sm">auto_awesome</span>
-                                Find Similar
-                            </button>
-                            <button onclick="removeFromList(${movie.movie_id})"
-                                class="bg-surface-bright/80 backdrop-blur-md text-white w-full py-2 rounded-lg font-medium text-xs hover:bg-red-600 transition-all">
-                                Remove
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-1">
-                        <h3 class="font-bold font-headline text-base group-hover:text-primary transition-colors line-clamp-1">${movie.title}</h3>
-                        <div class="flex items-center gap-3 text-xs font-label text-on-surface-variant">
-                            <span>${year}</span>
-                            <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1">star</span>
-                                <span class="text-on-surface font-medium">${rating}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }).join('');
-
-        grid.innerHTML = html + `
-            <div class="group">
-                <a href="{% url 'homeFeed' %}" class="w-full aspect-[2/3] rounded-xl border-2 border-dashed border-outline-variant/30 flex flex-col items-center justify-center gap-4 bg-surface-container-lowest hover:bg-surface-container-low transition-all">
-                    <div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
-                        <span class="material-symbols-outlined text-on-surface">add</span>
-                    </div>
-                    <span class="font-bold font-headline text-on-surface-variant text-sm">Browse More</span>
-                </a>
+    if (!watchlistItems || watchlistItems.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full py-20 text-center">
+                <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">movie_filter</span>
+                <p class="text-xl font-headline text-on-surface-variant mb-2">Your list is empty.</p>
+                <p class="text-neutral-500 font-body text-sm mb-6">Save movies from the browse page to build your taste profile.</p>
+                <a href="{% url 'homeFeed' %}" class="bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-headline font-bold hover:brightness-110 transition-all inline-block">Browse Movies</a>
             </div>`;
+        return;
     }
+
+    const html = watchlistItems.map(item => {
+        // Use movie_details from serializer
+        const movie = item.movie_details;
+        const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+        const poster = (movie.poster_url && movie.poster_url !== 'None' && movie.poster_url !== 'nan')
+            ? movie.poster_url
+            : PLACEHOLDER;
+        const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : '0.0';
+
+        return `
+            <div class="group cursor-pointer">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden mb-4 bg-surface-container-low relative transition-transform duration-500 ease-out group-hover:scale-[1.02]">
+                    <img src="${poster}" alt="${movie.title}" class="w-full h-full object-cover"
+                         onerror="this.src='${PLACEHOLDER}'" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
+                        <button onclick="event.stopPropagation(); window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'"
+                            class="bg-primary-container text-on-primary-container w-full py-2 rounded-lg font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                            Find Similar
+                        </button>
+                        <button onclick="event.stopPropagation(); removeFromList('${movie.movie_id}')"
+                            class="bg-surface-bright/80 backdrop-blur-md text-white w-full py-2 rounded-lg font-medium text-xs hover:bg-red-600 transition-all">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-1" onclick="window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'">
+                    <h3 class="font-bold font-headline text-base group-hover:text-primary transition-colors line-clamp-1">${movie.title}</h3>
+                    <div class="flex items-center gap-3 text-xs font-label text-on-surface-variant">
+                        <span>${year}</span>
+                        <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1">star</span>
+                            <span class="text-on-surface font-medium">${rating}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+
+    // Add the "Browse More" card
+    grid.innerHTML = html + `
+        <div class="group">
+            <a href="{% url 'homeFeed' %}" class="w-full aspect-[2/3] rounded-xl border-2 border-dashed border-outline-variant/30 flex flex-col items-center justify-center gap-4 bg-surface-container-lowest hover:bg-surface-container-low transition-all">
+                <div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
+                    <span class="material-symbols-outlined text-on-surface">add</span>
+                </div>
+                <span class="font-bold font-headline text-on-surface-variant text-sm">Browse More</span>
+            </a>
+        </div>`;
+}
     </script>
   </body>
 </html>
