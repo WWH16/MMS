@@ -1,7 +1,6 @@
 from accounts.models import Movies, Watchlist
 from .serializers import MovieSerializer, UserSerializer, WatchlistSerializer
 
-# api/views.py
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -17,6 +16,8 @@ from django.conf import settings
 from rest_framework.throttling import UserRateThrottle
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.apps import apps
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -34,8 +35,6 @@ def signup_view(request):
                 }, status=status.HTTP_201_CREATED)
         except Exception:
             return Response({"error": "Internal server error"}, status=500)
-
-    # Returns specific errors like "Username already exists"
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -44,7 +43,6 @@ def signup_view(request):
 def login_view(request):
     username = request.data.get('username')
     password = request.data.get('password')
-
     user = authenticate(username=username, password=password)
     if user:
         token, _ = Token.objects.get_or_create(user=user)
@@ -53,22 +51,18 @@ def login_view(request):
             "is_staff": user.is_staff,
             "username": user.username
         }, status=status.HTTP_200_OK)
-
     return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 @api_view(['GET', 'POST'])
 def movie_list(request):
     if request.method == 'GET':
-        # USERS & ADMINS can do this
         movies = Movies.objects.all()
         serializer = MovieSerializer(movies, many=True)
         return Response(serializer.data)
-
     elif request.method == 'POST':
-        # ACTOR CHECK: Only Admin (is_staff) can add movies
         if not request.user.is_staff:
             return Response({"error": "Only admins can add movies"}, status=status.HTTP_403_FORBIDDEN)
-
         serializer = MovieSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -81,20 +75,15 @@ class MovieListView(APIView):
 
     def get(self, request):
         movies = Movies.objects.all().order_by('-vote_average')
-
-        # 1. Search Logic
         search = request.GET.get('search', '').strip()
         if search:
             movies = movies.filter(
                 Q(title__icontains=search) | Q(genres__icontains=search)
             )
-        # 2. Pagination Logic
         page_number = request.GET.get('page', 1)
-        paginator = Paginator(movies, 24)  # 24 is better for grid layouts (divisible by 2, 3, 4, 6)
+        paginator = Paginator(movies, 24)
         page_obj = paginator.get_page(page_number)
-
         serializer = MovieSerializer(page_obj.object_list, many=True)
-
         return Response({
             "results": serializer.data,
             "has_next": page_obj.has_next(),
@@ -102,13 +91,14 @@ class MovieListView(APIView):
             "current_page": page_obj.number
         })
 
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Simply delete the token from the server-side database
         request.user.auth_token.delete()
         return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST', 'DELETE'])
 @permission_classes([IsAuthenticated])
@@ -141,46 +131,58 @@ def my_list_view(request):
         except Watchlist.DoesNotExist:
             return Response({"error": "Movie not in watchlist"}, status=404)
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
-@throttle_classes([UserRateThrottle])  # Apply rate limiting to this endpoint
 def recommend_view(request):
-    title = request.query_params.get('title', '').strip()
-    if not title:
-        return Response({"error": "title is required"}, status=400)
+    api_config = apps.get_app_config('api')
 
-    # ================================================================
-    # TODO: Uncomment this block when your .pkl model is ready
-    # ================================================================
-    # import pickle
-    # with open('model/cosine_sim.pkl', 'rb') as f:
-    #     cosine_sim = pickle.load(f)
-    # with open('model/df.pkl', 'rb') as f:
-    #     df = pickle.load(f)
-    #
-    # try:
-    #     index = df[df["Title"] == title].index[0]
-    #     sim_scores = sorted(
-    #         enumerate(cosine_sim[index]),
-    #         key=lambda x: x[1], reverse=True
-    #     )[1:6]
-    #     recommended_titles = df.iloc[[i[0] for i in sim_scores]]["Title"].tolist()
-    #     recommended = Movies.objects.filter(title__in=recommended_titles)
-    # except IndexError:
-    #     return Response({"error": "Movie not found in model"}, status=404)
-    # ================================================================
+    if not hasattr(api_config, 'cosine_sim') or api_config.cosine_sim is None:
+        return Response({
+            "error": "Recommendation engine is initializing. Please try again.",
+            "status": "loading"
+        }, status=503)
 
-    # --- Temporary placeholder until model is integrated ---
-    # Returns top-rated movies excluding the seed as stand-in results
-    seed_movie = Movies.objects.filter(title__iexact=title).first()
-    if not seed_movie:
-        return Response({"error": "Movie not found"}, status=404)
+    query = request.query_params.get('title', '').strip().lower()
+    if not query:
+        return Response({"error": "Query parameter 'title' is required."}, status=400)
 
-    recommended = Movies.objects.exclude(title__iexact=title).order_by('-vote_average')[:5]
+    if query not in api_config.movie_indices:
+        matching_titles = [t for t in api_config.movie_indices.keys() if query in t]
+        if matching_titles:
+            query = matching_titles[0]
+        else:
+            return Response({
+                "error": "not_found",
+                "message": f"We couldn't find \"{request.query_params.get('title')}\" in our catalogue. Try a different title.",
+            }, status=404)
+
+    idx = api_config.movie_indices[query]
+    sim_scores = sorted(enumerate(api_config.cosine_sim[idx]), key=lambda x: x[1], reverse=True)
+    similar_indices = [i[0] for i in sim_scores[1:11]]
+    similarity_scores = [i[1] for i in sim_scores[1:11]]
+
+    recommended_ids = api_config.movies_df.iloc[similar_indices]['id'].tolist()
+    recommended_movies = Movies.objects.filter(movie_id__in=recommended_ids)
+    movie_dict = {m.movie_id: m for m in recommended_movies}
+    ordered_movies = [movie_dict[mid] for mid in recommended_ids if mid in movie_dict]
+
+    seed_id = api_config.movies_df.iloc[idx]['id']
+    try:
+        seed_movie = Movies.objects.get(movie_id=seed_id)
+    except Movies.DoesNotExist:
+        seed_movie = None
+
+    if not ordered_movies:
+        return Response({
+            "error": "no_results",
+            "message": "We found the movie but couldn't generate recommendations right now.",
+        }, status=404)
 
     return Response({
-        "seed": MovieSerializer(seed_movie).data,
-        "recommendations": MovieSerializer(recommended, many=True).data
+        "recommendations": MovieSerializer(ordered_movies, many=True).data,
+        "similarity_scores": similarity_scores,
+        "seed": MovieSerializer(seed_movie).data if seed_movie else None,
     })
 
 
@@ -188,24 +190,56 @@ def recommend_view(request):
 @permission_classes([AllowAny])
 @throttle_classes([UserRateThrottle])
 def tmdb_backdrop_view(request):
+    movie_id = request.query_params.get('movie_id', '').strip()
     title = request.query_params.get('title', '').strip()
-    if not title:
-        return Response({"error": "title is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # We use settings.TMDB_API_KEY which now holds the value from .env
-        res = requests.get(
-            'https://api.themoviedb.org/3/search/movie',
-            params={'api_key': settings.TMDB_API_KEY, 'query': title},
-            timeout=5
-        )
-        data = res.json()
-        result = data.get('results', [])
+        # ✅ Prefer IMDB ID lookup — fast and accurate
+        if movie_id and movie_id.startswith('tt'):
+            res = requests.get(
+                f'https://api.themoviedb.org/3/find/{movie_id}',
+                params={'api_key': settings.TMDB_API_KEY, 'external_source': 'imdb_id'},
+                timeout=5
+            )
+            data = res.json()
+            results = data.get('movie_results', [])
+            if results:
+                r = results[0]
+                backdrop = r.get('backdrop_path')
+                poster = r.get('poster_path')
+                return Response({
+                    "backdrop_url": f"https://image.tmdb.org/t/p/original{backdrop}" if backdrop else None,
+                    "poster_url": f"https://image.tmdb.org/t/p/w500{poster}" if poster else None,
+                    "overview": r.get('overview'),
+                    "release_date": r.get('release_date'),
+                })
 
-        if result and result[0].get('backdrop_path'):
-            backdrop_url = f"https://image.tmdb.org/t/p/original{result[0]['backdrop_path']}"
-            return Response({"backdrop_url": backdrop_url})
+        # Fallback: search by title
+        if title:
+            res = requests.get(
+                'https://api.themoviedb.org/3/search/movie',
+                params={'api_key': settings.TMDB_API_KEY, 'query': title},
+                timeout=5
+            )
+            data = res.json()
+            results = data.get('results', [])
+            if results and results[0].get('backdrop_path'):
+                return Response({
+                    "backdrop_url": f"https://image.tmdb.org/t/p/original{results[0]['backdrop_path']}"
+                })
 
         return Response({"backdrop_url": None})
     except Exception:
-        return Response({"backdrop_url": None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"backdrop_url": None}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def movie_search_suggestions(request):
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return Response([])
+    movies = Movies.objects.filter(
+        title__icontains=query
+    ).values('movie_id', 'title')[:8]
+    return Response(list(movies))

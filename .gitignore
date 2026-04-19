@@ -3,6 +3,11 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# JUPYTER NOTEBOOK
+.ipynb_checkpoints
+/NOTEBOOK
+/ml_models
+
 # C extensions
 *.so
 
