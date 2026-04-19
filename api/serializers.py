@@ -36,10 +36,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class WatchlistSerializer(serializers.ModelSerializer):
-    movie = MovieSerializer(read_only=True)
-    movie_id = serializers.IntegerField(write_only=True)
+    movie_details = MovieSerializer(source='movie', read_only=True)  # ← ADD THIS LINE
+    movie_id = serializers.CharField(write_only=True)  # ← CHANGED to CharField (your movie_id is a string like 'tt0111161')
 
     class Meta:
         model = Watchlist
-        fields = ['id', 'user', 'movie', 'movie_id', 'added_at']
+        fields = ['id', 'user', 'movie_details', 'movie_id', 'added_at']  # ← CHANGED 'movie' to 'movie_details'
         read_only_fields = ['user', 'added_at']

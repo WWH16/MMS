@@ -182,19 +182,37 @@
         } catch (error) { console.error("Error:", error); }
     }
 
-    async function removeFromList(movieId) {
-        if (!confirm('Remove this movie from your list?')) return;
-        const token = localStorage.getItem('token');
-        try {
-            const response = await fetch('/api/watchlist/', {
-                method: 'DELETE',
-                headers: { 'Authorization': `Token ${token}`, 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-                body: JSON.stringify({ movie_id: movieId })
-            });
-            if (response.ok) fetchWatchlist();
-            else alert("Failed to remove movie.");
-        } catch (error) { console.error("Error:", error); }
+async function removeFromList(movieId) {
+    if (!confirm('Remove this movie from your list?')) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = "{% url 'signin' %}";
+        return;
     }
+
+    try {
+        const response = await fetch('/api/watchlist/', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ movie_id: movieId })
+        });
+
+        if (response.ok || response.status === 204) {
+            // Refresh the page to show updated list
+            fetchWatchlist();
+        } else {
+            const error = await response.json();
+            alert(error.error || "Failed to remove movie.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Network error. Please try again.");
+    }
+}
 
     function renderMovies(watchlistItems) {
         const grid = document.getElementById('movieGrid');

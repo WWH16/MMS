@@ -352,7 +352,10 @@ function showEmpty(message = null) {
 
 async function toggleWatchlist(btn, movieId) {
     const token = localStorage.getItem('token');
-    if (!token) { window.location.href = "{% url 'signin' %}"; return; }
+    if (!token) {
+        window.location.href = "{% url 'signin' %}";
+        return;
+    }
 
     const inList = btn.dataset.inList === 'true';
     btn.disabled = true;
@@ -363,11 +366,11 @@ async function toggleWatchlist(btn, movieId) {
             method: inList ? 'DELETE' : 'POST',
             headers: {
                 'Authorization': `Token ${token}`,
-                'X-CSRFToken': getCookie('csrftoken'),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ movie_id: movieId })
         });
+
         if (res.ok || res.status === 204) {
             const nowInList = !inList;
             btn.dataset.inList = nowInList;
@@ -375,9 +378,13 @@ async function toggleWatchlist(btn, movieId) {
             btn.className = `flex-1 py-2 rounded-lg font-headline font-bold text-[10px] transition-all ${
                 nowInList ? 'bg-surface-bright/80 text-on-surface' : 'bg-primary-container text-on-primary-container hover:brightness-110'
             }`;
+        } else {
+            const error = await res.json();
+            alert(error.error || 'Failed to update watchlist');
         }
     } catch (err) {
         console.error(err);
+        alert('Network error. Please try again.');
     } finally {
         btn.disabled = false;
     }

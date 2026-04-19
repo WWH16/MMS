@@ -104,7 +104,7 @@ class LogoutView(APIView):
 @permission_classes([IsAuthenticated])
 def my_list_view(request):
     if request.method == 'GET':
-        watchlist = Watchlist.objects.filter(user=request.user)
+        watchlist = Watchlist.objects.filter(user=request.user).select_related('movie')
         serializer = WatchlistSerializer(watchlist, many=True)
         return Response(serializer.data)
 
@@ -116,14 +116,22 @@ def my_list_view(request):
             movie = Movies.objects.get(movie_id=movie_id)
         except Movies.DoesNotExist:
             return Response({"error": "Movie not found"}, status=404)
-        if Watchlist.objects.filter(user=request.user, movie=movie).exists():
+
+        watchlist_item, created = Watchlist.objects.get_or_create(
+            user=request.user,
+            movie=movie
+        )
+        if not created:
             return Response({"error": "Already in watchlist"}, status=400)
-        watchlist_item = Watchlist.objects.create(user=request.user, movie=movie)
+
         serializer = WatchlistSerializer(watchlist_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     elif request.method == 'DELETE':
         movie_id = request.data.get('movie_id')
+        if not movie_id:
+            return Response({"error": "movie_id required"}, status=400)
+
         try:
             item = Watchlist.objects.get(user=request.user, movie_id=movie_id)
             item.delete()

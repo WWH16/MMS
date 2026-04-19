@@ -10,7 +10,7 @@ urlpatterns = [
 
     # Movie & List Endpoints
     path('movies/', MovieListView.as_view(), name='movie-list'),
-    path('watchlist/', views.my_list_view, name='api-watchlist'),
+    path('watchlist/', views.my_list_view, name='watchlist'),
 
     # Recommendation & AI Endpoints
     path('recommend/', views.recommend_view, name='api-recommend'),

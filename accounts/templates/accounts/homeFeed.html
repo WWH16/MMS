@@ -735,10 +735,16 @@ async function fetchWatchlistIds(token) {
 
 async function toggleWatchlist(btn, movieId, isHero = false, isModal = false) {
     const token = localStorage.getItem('token');
-    if (!token) { window.location.href = "{% url 'signin' %}"; return; }
+    if (!token) {
+        window.location.href = "{% url 'signin' %}";
+        return;
+    }
 
     const inList = btn.dataset.inList === 'true';
     btn.disabled = true;
+
+    // Store original text for error recovery
+    const originalText = btn.innerHTML;
 
     try {
         const res = await fetch('/api/watchlist/', {
@@ -746,10 +752,10 @@ async function toggleWatchlist(btn, movieId, isHero = false, isModal = false) {
             headers: {
                 'Authorization': `Token ${token}`,
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({ movie_id: movieId })
         });
+
         if (res.ok || res.status === 204) {
             const nowInList = !inList;
             btn.dataset.inList = nowInList;
@@ -766,10 +772,25 @@ async function toggleWatchlist(btn, movieId, isHero = false, isModal = false) {
                     nowInList ? 'bg-surface-bright/80 text-on-surface' : 'bg-primary-container text-on-primary-container'
                 }`;
             }
-            nowInList ? currentWatchlistIds.add(movieId) : currentWatchlistIds.delete(movieId);
+
+            // Update the global watchlist set
+            if (nowInList) {
+                currentWatchlistIds.add(movieId);
+            } else {
+                currentWatchlistIds.delete(movieId);
+            }
+        } else {
+            const error = await res.json();
+            console.error('Watchlist operation failed:', error);
+            alert(error.error || 'Failed to update watchlist');
         }
-    } catch (e) { console.error(e); }
-    finally { btn.disabled = false; }
+    } catch (e) {
+        console.error('Watchlist error:', e);
+        alert('Network error. Please try again.');
+        btn.innerHTML = originalText;
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 function parseGenre(movie) {
