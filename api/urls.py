@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from .views import LogoutView, MovieListView, movie_search_suggestions
 
@@ -16,4 +16,7 @@ urlpatterns = [
     path('recommend/', views.recommend_view, name='api-recommend'),
     path('tmdb-backdrop/', views.tmdb_backdrop_view, name='api-tmdb-backdrop'),
     path('suggestions/', movie_search_suggestions, name='api-suggestions'),
+
+    # OR directly:
+    path('watch/', include('api.watch.urls')),
 ]

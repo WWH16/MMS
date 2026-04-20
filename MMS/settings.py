@@ -147,3 +147,5 @@ TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')

@@ -79,12 +79,37 @@ async function openModal(movie) {
       onSuccess: (nowInList) => {
         if (nowInList) currentWatchlistIds.add(movie.movie_id);
         else           currentWatchlistIds.delete(movie.movie_id);
-        // Sync any card buttons on the grid
         _syncCardButtons(movie.movie_id, nowInList);
       }
     });
   };
   el.recommendBtn.onclick = () => handleRecommend(movie.title);
+
+  // Add Watch button to modal
+  const buttonContainer = document.querySelector('#movieModal .flex.flex-wrap.gap-4');
+  if (buttonContainer) {
+    // Remove existing watch button if any
+    const existingWatchBtn = document.getElementById('modalWatchBtn');
+    if (existingWatchBtn) existingWatchBtn.remove();
+
+    // Create new watch button
+    const watchBtn = document.createElement('button');
+    watchBtn.id = 'modalWatchBtn';
+    watchBtn.className = 'w-full py-4 mb-3 rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 bg-green-600 text-white hover:bg-green-700';
+    watchBtn.innerHTML = `
+      <span class="material-symbols-outlined text-lg">play_circle</span>
+      Watch Trailer
+    `;
+
+    // Insert before the button container
+    buttonContainer.parentNode.insertBefore(watchBtn, buttonContainer);
+
+    // Add click handler
+    watchBtn.onclick = (e) => {
+      e.stopPropagation();
+      handleWatch(movie.title, year !== 'N/A' ? year : null);
+    };
+  }
 
   el.modal.classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -126,6 +151,203 @@ function _syncCardButtons(movieId, inList) {
     btn.textContent = inList ? '✓ SAVED' : '+ SAVE';
   });
 }
+
+// ─── Watch functionality ───────────────────────────────────────────
+window.handleWatch = async function(title, year = null) {
+  // Show loading state
+  showToast('Loading trailer...', 'success');
+
+  try {
+    // Build URL with year if available
+    let url = `/api/watch/?title=${encodeURIComponent(title)}`;
+    if (year) {
+      url += `&year=${encodeURIComponent(year)}`;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.url) {
+      // Close the movie modal if it's open
+      closeModal();
+      // Show watch player
+      showWatchPlayer(data, title);
+    } else {
+      showToast(data.message || 'No trailer found', 'remove');
+    }
+  } catch (error) {
+    console.error('Watch error:', error);
+    showToast('Unable to load trailer', 'remove');
+  }
+};
+
+function showWatchPlayer(data, title) {
+  // Create watch modal
+  const watchModal = document.createElement('div');
+  watchModal.id = 'watchPlayerModal';
+  watchModal.className = 'fixed inset-0 z-[150] flex items-center justify-center bg-black/95 backdrop-blur-md';
+  watchModal.innerHTML = `
+    <button class="absolute top-6 right-6 text-white hover:text-primary-container z-[160] transition-colors" onclick="closeWatchPlayer()">
+      <span class="material-symbols-outlined text-4xl">close</span>
+    </button>
+    <div class="relative w-full max-w-6xl h-[80vh] mx-4 bg-black rounded-2xl overflow-hidden shadow-2xl">
+      <div class="absolute top-4 left-4 z-10">
+        <span class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+          Trailer
+        </span>
+      </div>
+      <div id="youtubePlayerContainer" class="w-full h-full"></div>
+    </div>
+  `;
+
+  document.body.appendChild(watchModal);
+  document.body.style.overflow = 'hidden';
+
+  // Load YouTube IFrame API
+  loadYouTubeAPI().then(() => {
+    const videoId = extractYouTubeVideoId(data.url);
+    if (videoId) {
+      new YT.Player('youtubePlayerContainer', {
+        videoId: videoId,
+        playerVars: {
+          autoplay: 0,
+          rel: 0,
+          modestbranding: 1,
+          origin: window.location.origin,
+          enablejsapi: 1
+        },
+        events: {
+          'onError': onPlayerError,
+          'onReady': onPlayerReady
+        }
+      });
+    } else {
+      // Fallback to iframe if video ID extraction fails
+      document.getElementById('youtubePlayerContainer').innerHTML = `
+        <iframe 
+          src="${data.url}" 
+          class="w-full h-full" 
+          frameborder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>
+      `;
+    }
+  }).catch(() => {
+    // Fallback to iframe if API fails
+    document.getElementById('youtubePlayerContainer').innerHTML = `
+      <iframe 
+        src="${data.url}" 
+        class="w-full h-full" 
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+      </iframe>
+    `;
+  });
+
+  // Close on escape key
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeWatchPlayer();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
+
+  // Store handler for cleanup
+  watchModal._escHandler = escHandler;
+
+  // Click outside to close
+  watchModal.addEventListener('click', (e) => {
+    if (e.target === watchModal) {
+      closeWatchPlayer();
+    }
+  });
+}
+
+function extractYouTubeVideoId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)([^&\?\/]+)/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function onPlayerReady(event) {
+  // Player is ready
+  console.log('YouTube player ready');
+}
+
+function onPlayerError(event) {
+  console.error('YouTube player error:', event.data);
+  // Fallback to iframe on error
+  const container = document.getElementById('youtubePlayerContainer');
+  if (container && !container.querySelector('iframe')) {
+    const videoId = extractYouTubeVideoId(container.dataset.url || '');
+    if (videoId) {
+      container.innerHTML = `
+        <iframe 
+          src="https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0" 
+          class="w-full h-full" 
+          frameborder="0" 
+          allowfullscreen>
+        </iframe>
+      `;
+    }
+  }
+}
+
+let youtubeAPILoaded = false;
+function loadYouTubeAPI() {
+  return new Promise((resolve, reject) => {
+    if (youtubeAPILoaded) {
+      resolve();
+      return;
+    }
+
+    if (window.YT && window.YT.Player) {
+      youtubeAPILoaded = true;
+      resolve();
+      return;
+    }
+
+    // Load the API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      youtubeAPILoaded = true;
+      resolve();
+    };
+
+    // Timeout after 5 seconds
+    setTimeout(() => reject(new Error('YouTube API load timeout')), 5000);
+  });
+}
+
+window.closeWatchPlayer = function() {
+  const modal = document.getElementById('watchPlayerModal');
+  if (modal) {
+    if (modal._escHandler) {
+      window.removeEventListener('keydown', modal._escHandler);
+    }
+    // Clean up YouTube player if it exists
+    const container = document.getElementById('youtubePlayerContainer');
+    if (container && container._player) {
+      container._player.destroy();
+    }
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+};
 
 // ─── Render helpers ───────────────────────────────────────────────
 function renderMovieCardTemplate(movie, watchlistIds, isStaff) {
@@ -293,6 +515,31 @@ async function renderHero(movie, watchlistIds) {
 
   const recBtn = document.getElementById('heroRecommendBtn');
   if (recBtn) recBtn.onclick = () => handleRecommend(movie.title);
+
+  // Add watch button to hero
+  const heroButtonsContainer = document.querySelector('.flex.gap-3.md\\:gap-4.items-center.flex-wrap');
+  if (heroButtonsContainer) {
+    // Remove existing watch button if any
+    const existingHeroWatch = document.getElementById('heroWatchBtn');
+    if (existingHeroWatch) existingHeroWatch.remove();
+
+    // Create watch button
+    const heroWatchBtn = document.createElement('button');
+    heroWatchBtn.id = 'heroWatchBtn';
+    heroWatchBtn.className = 'bg-green-600 text-white px-10 py-3 rounded-lg font-headline font-bold flex items-center gap-2 hover:bg-green-700 active:scale-95 transition-all';
+    heroWatchBtn.innerHTML = `
+      <span class="material-symbols-outlined text-sm">play_circle</span>
+      Watch Trailer
+    `;
+    heroWatchBtn.onclick = () => handleWatch(movie.title, year !== 'N/A' ? year : null);
+
+    // Insert before the recommend button
+    if (recBtn) {
+      heroButtonsContainer.insertBefore(heroWatchBtn, recBtn);
+    } else {
+      heroButtonsContainer.appendChild(heroWatchBtn);
+    }
+  }
 }
 
 // ─── Filters ──────────────────────────────────────────────────────
