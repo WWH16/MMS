@@ -1,385 +1,67 @@
-<!doctype html>
-<html class="dark" lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>ReelMatch — My List</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Be+Vietnam+Pro:wght@400;500;700&family=Inter:wght@300;400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "on-background": "#e5e2e1", "tertiary-fixed": "#d5e3ff", "inverse-primary": "#c0000c",
-              "surface-variant": "#353534", error: "#ffb4ab", tertiary: "#a7c8ff",
-              "on-tertiary-fixed-variant": "#004689", "on-primary-fixed-variant": "#930007",
-              "surface-container-low": "#1c1b1b", "surface-container-lowest": "#0e0e0e",
-              "primary-fixed-dim": "#ffb4aa", "on-surface": "#e5e2e1",
-              "on-secondary-fixed-variant": "#8e1210", "on-secondary": "#690003",
-              secondary: "#ffb4aa", "tertiary-fixed-dim": "#a7c8ff", "inverse-surface": "#e5e2e1",
-              "tertiary-container": "#0072d7", "on-error-container": "#ffdad6",
-              "on-surface-variant": "#e9bcb6", "surface-tint": "#ffb4aa", "on-tertiary": "#003061",
-              "on-error": "#690005", "surface-container-high": "#2a2a2a", background: "#131313",
-              "on-primary": "#690003", "on-secondary-fixed": "#410001", "on-tertiary-fixed": "#001b3c",
-              "secondary-fixed-dim": "#ffb4aa", "inverse-on-surface": "#313030", outline: "#af8782",
-              primary: "#ffb4aa", "on-secondary-container": "#ff9f93",
-              "surface-container-highest": "#353534", "primary-fixed": "#ffdad5",
-              "outline-variant": "#5e3f3b", "on-tertiary-container": "#f8f9ff",
-              "surface-bright": "#3a3939", "error-container": "#93000a",
-              "secondary-container": "#921512", "surface-container": "#201f1f",
-              "on-primary-container": "#fff7f6", "primary-container": "#e50914",
-              "surface-dim": "#131313", "secondary-fixed": "#ffdad5",
-              surface: "#131313", "on-primary-fixed": "#410001",
-            },
-            borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
-            fontFamily: { headline: ["Manrope"], body: ["Be Vietnam Pro"], label: ["Inter"] },
-          },
-        },
-      };
-    </script>
-    <style>
-      .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
-      .hero-glow { background: radial-gradient(circle at 50% 0%, rgba(229, 9, 20, 0.15) 0%, rgba(19, 19, 19, 0) 70%); }
-    </style>
-  </head>
-  <body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+{% extends 'accounts/base.html' %}
+{% load static %}
 
-    <!-- Nav -->
-    <nav class="bg-neutral-950/70 backdrop-blur-xl top-0 sticky z-50">
-      <div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
-        <div class="flex items-center gap-12">
-          <a href="{% url 'homeFeed' %}" class="text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">ReelMatch</a>
-          <div class="hidden md:flex items-center gap-8">
-            <a class="text-gray-400 font-medium hover:text-white transition-colors duration-300 font-body" href="{% url 'homeFeed' %}">Browse</a>
-            <a class="text-white font-bold border-b-2 border-red-600 pb-1 font-body" href="{% url 'myList' %}">My List</a>
-            <a class="text-gray-400 font-medium hover:text-white transition-colors duration-300 font-body" href="{% url 'recommendations' %}">Recommendations</a>
-          </div>
-        </div>
-        <div class="flex items-center gap-6">
-          <div class="relative group">
-            <button class="text-on-surface hover:text-white transition-all scale-95 active:opacity-80 flex items-center gap-2">
-              <span class="material-symbols-outlined text-3xl">account_circle</span>
-              <span class="material-symbols-outlined text-sm transition-transform group-hover:rotate-180">expand_more</span>
-            </button>
-            <div class="absolute right-0 mt-2 w-48 bg-surface-container-high backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
-              <div class="p-4 border-b border-white/5">
-                <p id="userDisplay" class="text-sm font-bold text-on-surface truncate">User</p>
-                <p class="text-[10px] uppercase tracking-widest text-neutral-500">Member</p>
-              </div>
-              <div class="p-2">
-                <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-on-surface hover:bg-white/5 rounded-lg transition-colors">
-                  <span class="material-symbols-outlined text-lg">settings</span>Settings
-                </a>
-                <button id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-container hover:bg-primary-container/10 rounded-lg transition-colors">
-                  <span class="material-symbols-outlined text-lg">logout</span>Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+{% block title %}ReelMatch — My List{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero-glow { background: radial-gradient(circle at 50% 0%, rgba(229,9,20,0.15) 0%, rgba(19,19,19,0) 70%); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<main class="relative min-h-screen">
+  <div class="hero-glow absolute inset-0 pointer-events-none"></div>
+  <div class="max-w-screen-2xl mx-auto px-8 pt-12 pb-24 relative">
+
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div>
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter font-headline mb-2 text-on-surface">My List</h1>
+        <p class="text-on-surface-variant font-body max-w-lg">Movies you've saved — the foundation of your taste profile.</p>
       </div>
-    </nav>
-
-    <!-- Main -->
-    <main class="relative min-h-screen">
-      <div class="hero-glow absolute inset-0 pointer-events-none"></div>
-      <div class="max-w-screen-2xl mx-auto px-8 pt-12 pb-24 relative">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div>
-            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter font-headline mb-2 text-on-surface">My List</h1>
-            <p class="text-on-surface-variant font-body max-w-lg">Movies you've saved — the foundation of your taste profile.</p>
-          </div>
-          <a href="{% url 'recommendations' %}"
-            class="flex items-center gap-2 bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-headline font-bold hover:brightness-110 transition-all self-start md:self-auto">
-            <span class="material-symbols-outlined">auto_awesome</span>
-            Get Recommendations
-          </a>
-        </div>
-
-        <div id="movieGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
-          <div id="loader" class="col-span-full flex justify-center py-20">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-neutral-950 py-12">
-      <div class="max-w-6xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div class="col-span-2 md:col-span-1">
-          <span class="text-lg font-bold text-neutral-500 font-headline uppercase block mb-4">ReelMatch</span>
-          <p class="text-neutral-500 text-xs font-label">© 2024 ReelMatch. All Rights Reserved.</p>
-        </div>
-        <div class="flex flex-col gap-3">
-          <a class="text-neutral-500 text-sm font-body hover:underline transition-all opacity-80 hover:opacity-100" href="#">FAQ</a>
-          <a class="text-neutral-500 text-sm font-body hover:underline transition-all opacity-80 hover:opacity-100" href="#">Help Center</a>
-          <a class="text-neutral-500 text-sm font-body hover:underline transition-all opacity-80 hover:opacity-100" href="#">Terms of Use</a>
-        </div>
-        <div class="flex flex-col gap-3">
-          <a class="text-neutral-500 text-sm font-body hover:underline transition-all opacity-80 hover:opacity-100" href="#">Privacy</a>
-          <a class="text-neutral-500 text-sm font-body hover:underline transition-all opacity-80 hover:opacity-100" href="#">Cookie Preferences</a>
-        </div>
-        <div class="flex flex-col gap-3">
-          <div class="flex gap-4 mt-2">
-            <span class="material-symbols-outlined text-neutral-500 cursor-pointer hover:text-white transition-colors">public</span>
-            <span class="material-symbols-outlined text-neutral-500 cursor-pointer hover:text-white transition-colors">share</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-<script>
-const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 500 750\'%3E%3Cdefs%3E%3ClinearGradient id=\'g\' x1=\'0%25\' y1=\'0%25\' x2=\'100%25\' y2=\'100%25\'%3E%3Cstop offset=\'0%25\' stop-color=\'%231c1b1b\'/%3E%3Cstop offset=\'100%25\' stop-color=\'%232a2a2a\'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=\'500\' height=\'750\' fill=\'url(%23g)\'/%3E%3Cpath fill=\'%23e50914\' fill-opacity=\'0.08\' d=\'M180,320 L320,375 L180,430 L180,320 Z\'/%3E%3Ctext x=\'250\' y=\'500\' font-family=\'Inter, sans-serif\' font-size=\'14\' fill=\'%23af8782\' text-anchor=\'middle\' letter-spacing=\'4\' font-weight=\'300\'%3ENO POSTER%3C/text%3E%3C/svg%3E';
-
-// --- Remove Modal ---
-let pendingRemoveId = null;
-
-function openRemoveModal(movieId, movieTitle) {
-    pendingRemoveId = movieId;
-    document.getElementById('removeModalText').textContent =
-        `"${movieTitle}" will be removed from your list.`;
-
-    const modal = document.getElementById('removeModal');
-    const card = document.getElementById('removeModalCard');
-    modal.classList.remove('opacity-0', 'invisible');
-    modal.classList.add('opacity-100', 'visible');
-    card.classList.remove('scale-95');
-    card.classList.add('scale-100');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeRemoveModal() {
-    pendingRemoveId = null;
-    const modal = document.getElementById('removeModal');
-    const card = document.getElementById('removeModalCard');
-    modal.classList.add('opacity-0', 'invisible');
-    modal.classList.remove('opacity-100', 'visible');
-    card.classList.add('scale-95');
-    card.classList.remove('scale-100');
-    document.body.style.overflow = '';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.href = "{% url 'signin' %}"; return; }
-
-    const username = localStorage.getItem('username') || 'User';
-    document.querySelectorAll('#userDisplay').forEach(el => el.innerText = username);
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        const btn = document.getElementById('logoutBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Signing out...';
-
-        try {
-            await fetch('/api/logout/', {
-                method: 'POST',
-                headers: { 'Authorization': `Token ${token}` }
-            });
-        } catch (err) {
-            console.error('Logout error:', err);
-        } finally {
-            localStorage.clear();
-            window.location.href = "{% url 'signin' %}";
-        }
-    });
-
-    // Modal button listeners
-    document.getElementById('removeCancelBtn')?.addEventListener('click', closeRemoveModal);
-
-    document.getElementById('removeConfirmBtn')?.addEventListener('click', async () => {
-        if (!pendingRemoveId) return;
-        const btn = document.getElementById('removeConfirmBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Removing...';
-
-        await doRemove(pendingRemoveId);
-
-        btn.disabled = false;
-        btn.innerHTML = 'Remove';
-        closeRemoveModal();
-    });
-
-    // Close on backdrop click
-    document.getElementById('removeModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'removeModal') closeRemoveModal();
-    });
-
-    // Close on Escape
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeRemoveModal();
-    });
-
-    fetchWatchlist();
-});
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        document.cookie.split(';').forEach(c => {
-            const cookie = c.trim();
-            if (cookie.startsWith(name + '='))
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        });
-    }
-    return cookieValue;
-}
-
-async function fetchWatchlist() {
-    const token = localStorage.getItem('token');
-    const grid = document.getElementById('movieGrid');
-
-    grid.innerHTML = `
-        <div class="col-span-full flex justify-center py-20">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>`;
-
-    try {
-        const response = await fetch('/api/watchlist/', {
-            headers: {
-                'Authorization': `Token ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            renderMovies(data);
-        } else if (response.status === 401) {
-            localStorage.clear();
-            window.location.href = "{% url 'signin' %}";
-        } else {
-            console.error("Failed to fetch watchlist");
-            renderMovies([]);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        renderMovies([]);
-    }
-}
-
-async function doRemove(movieId) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = "{% url 'signin' %}";
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/watchlist/', {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Token ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ movie_id: movieId })
-        });
-
-        if (response.ok || response.status === 204) {
-            await fetchWatchlist();
-        } else {
-            const error = await response.json();
-            alert(error.error || "Failed to remove movie.");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Network error. Please try again.");
-    }
-}
-
-function renderMovies(watchlistItems) {
-    const grid = document.getElementById('movieGrid');
-
-    if (!watchlistItems || watchlistItems.length === 0) {
-        grid.innerHTML = `
-            <div class="col-span-full py-20 text-center">
-                <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">movie_filter</span>
-                <p class="text-xl font-headline text-on-surface-variant mb-2">Your list is empty.</p>
-                <p class="text-neutral-500 font-body text-sm mb-6">Save movies from the browse page to build your taste profile.</p>
-                <a href="{% url 'homeFeed' %}" class="bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-headline font-bold hover:brightness-110 transition-all inline-block">Browse Movies</a>
-            </div>`;
-        return;
-    }
-
-    const html = watchlistItems.map(item => {
-        // Use movie_details from updated serializer, fallback to movie for old format
-        const movie = item.movie_details || item.movie;
-        const year = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
-        const poster = (movie.poster_url && movie.poster_url !== 'None' && movie.poster_url !== 'nan')
-            ? movie.poster_url : PLACEHOLDER;
-        const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : '0.0';
-        const safeTitle = movie.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-        return `
-            <div class="group cursor-pointer">
-                <div class="aspect-[2/3] rounded-xl overflow-hidden mb-4 bg-surface-container-low relative transition-transform duration-500 ease-out group-hover:scale-[1.02]">
-                    <img src="${poster}" alt="${movie.title}" class="w-full h-full object-cover"
-                         onerror="this.src='${PLACEHOLDER}'" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
-                        <button onclick="event.stopPropagation(); window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'"
-                            class="bg-primary-container text-on-primary-container w-full py-2 rounded-lg font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-sm">auto_awesome</span>
-                            Find Similar
-                        </button>
-                        <button onclick="event.stopPropagation(); openRemoveModal('${movie.movie_id}', '${safeTitle}')"
-                            class="bg-surface-bright/80 backdrop-blur-md text-white w-full py-2 rounded-lg font-medium text-xs hover:bg-red-600 transition-all">
-                            Remove
-                        </button>
-                    </div>
-                </div>
-                <div class="space-y-1" onclick="window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'">
-                    <h3 class="font-bold font-headline text-base group-hover:text-primary transition-colors line-clamp-1">${movie.title}</h3>
-                    <div class="flex items-center gap-3 text-xs font-label text-on-surface-variant">
-                        <span>${year}</span>
-                        <span class="w-1 h-1 rounded-full bg-outline-variant"></span>
-                        <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1">star</span>
-                            <span class="text-on-surface font-medium">${rating}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-
-    grid.innerHTML = html + `
-        <div class="group">
-            <a href="{% url 'homeFeed' %}" class="w-full aspect-[2/3] rounded-xl border-2 border-dashed border-outline-variant/30 flex flex-col items-center justify-center gap-4 bg-surface-container-lowest hover:bg-surface-container-low transition-all">
-                <div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors">
-                    <span class="material-symbols-outlined text-on-surface">add</span>
-                </div>
-                <span class="font-bold font-headline text-on-surface-variant text-sm">Browse More</span>
-            </a>
-        </div>`;
-}
-</script>
-
-  <!-- Remove Confirmation Modal -->
-<div id="removeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 invisible transition-all duration-300">
-    <div class="bg-surface-container rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-white/5 transition-transform duration-300 scale-95" id="removeModalCard">
-        <div class="flex flex-col items-center text-center gap-4">
-            <div class="w-14 h-14 rounded-full bg-error-container flex items-center justify-center">
-                <span class="material-symbols-outlined text-2xl text-error">delete</span>
-            </div>
-            <div>
-                <h3 class="text-xl font-headline font-extrabold text-on-surface mb-1">Remove Movie?</h3>
-                <p id="removeModalText" class="text-neutral-400 font-body text-sm leading-relaxed"></p>
-            </div>
-            <div class="flex gap-3 w-full mt-2">
-                <button id="removeCancelBtn"
-                    class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-surface-bright text-on-surface hover:bg-surface-container-highest transition-all active:scale-95">
-                    Cancel
-                </button>
-                <button id="removeConfirmBtn"
-                    class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-error-container text-white hover:bg-error transition-all active:scale-95">
-                    Remove
-                </button>
-            </div>
-        </div>
+      <a href="{% url 'recommendations' %}"
+        class="flex items-center gap-2 bg-primary-container text-on-primary-container px-6 py-3 rounded-lg font-headline font-bold hover:brightness-110 transition-all self-start md:self-auto">
+        <span class="material-symbols-outlined">auto_awesome</span>Get Recommendations
+      </a>
     </div>
+
+    <div id="movieGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+      <div class="col-span-full flex justify-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Remove Confirmation Modal -->
+<div id="removeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 invisible transition-all duration-300">
+  <div id="removeModalCard" class="bg-surface-container rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-white/5 transition-transform duration-300 scale-95">
+    <div class="flex flex-col items-center text-center gap-4">
+      <div class="w-14 h-14 rounded-full bg-error-container flex items-center justify-center">
+        <span class="material-symbols-outlined text-2xl text-error">delete</span>
+      </div>
+      <div>
+        <h3 class="text-xl font-headline font-extrabold text-on-surface mb-1">Remove Movie?</h3>
+        <p id="removeModalText" class="text-neutral-400 font-body text-sm leading-relaxed"></p>
+      </div>
+      <div class="flex gap-3 w-full mt-2">
+        <button id="removeCancelBtn"
+          class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-surface-bright text-on-surface hover:bg-surface-container-highest transition-all active:scale-95">
+          Cancel
+        </button>
+        <button id="removeConfirmBtn"
+          class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-error-container text-white hover:bg-error transition-all active:scale-95">
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
-  </body>
-</html>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'accounts/js/myList.js' %}"></script>
+{% endblock %}

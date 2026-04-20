@@ -7,6 +7,7 @@ __pycache__/
 .ipynb_checkpoints
 /NOTEBOOK
 /ml_models
+/staticfiles
 
 # C extensions
 *.so

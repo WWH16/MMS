@@ -1,0 +1,185 @@
+{% load static %}
+<!doctype html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>{% block title %}ReelMatch{% endblock %}</title>
+
+  <!-- Tailwind CDN — must load BEFORE the config script -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Tailwind theme config (single source of truth for all pages) -->
+  <script src="{% static 'accounts/js/Tailwind.config.js' %}"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Be+Vietnam+Pro:wght@400;500;600&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+  <style>
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+    body { background-color: #131313; color: #e5e2e1; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .toast.toast-success { background: rgba(229,9,20,0.92); color: #fff; }
+    .toast.toast-remove  { background: rgba(42,42,42,0.95);  color: #e5e2e1; border: 1px solid rgba(255,255,255,0.08); }
+
+    /* Scroll-to-top */
+    #scrollTopBtn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: #e50914;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px rgba(229,9,20,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(12px) scale(0.9);
+      z-index: 9000;
+      cursor: pointer;
+      border: none;
+    }
+    #scrollTopBtn.visible {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1);
+    }
+    #scrollTopBtn:hover { filter: brightness(1.15); transform: scale(1.08); }
+    #scrollTopBtn:active { transform: scale(0.95); }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="font-body selection:bg-primary-container selection:text-on-primary-container">
+
+  <!-- ═══════════════════ NAV ═══════════════════ -->
+  <nav class="bg-neutral-950/70 backdrop-blur-xl top-0 sticky z-50">
+    <div class="flex justify-between items-center w-full px-4 md:px-8 py-3 md:py-4 max-w-screen-2xl mx-auto">
+
+      <!-- Left: Logo + Links -->
+      <div class="flex items-center gap-10">
+        <a href="{% url 'homeFeed' %}" class="text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">ReelMatch</a>
+        <div class="hidden md:flex gap-8 items-center">
+          <a class="font-medium font-body transition-colors duration-300 {% if active_page == 'browse' %}text-white font-bold border-b-2 border-red-600 pb-1{% else %}text-gray-400 hover:text-white{% endif %}"
+             href="{% url 'homeFeed' %}">Browse</a>
+          <a class="font-medium font-body transition-colors duration-300 {% if active_page == 'mylist' %}text-white font-bold border-b-2 border-red-600 pb-1{% else %}text-gray-400 hover:text-white{% endif %}"
+             href="{% url 'myList' %}">My List</a>
+          <a class="font-medium font-body transition-colors duration-300 {% if active_page == 'recommendations' %}text-white font-bold border-b-2 border-red-600 pb-1{% else %}text-gray-400 hover:text-white{% endif %}"
+             href="{% url 'recommendations' %}">Recommendations</a>
+          <a id="addMovieLink" class="hidden text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="#">Add Movie</a>
+        </div>
+      </div>
+
+      <!-- Right: Search (homeFeed only) + Account -->
+      <div class="flex items-center gap-4">
+
+        {% block nav_search %}{% endblock %}
+
+        <!-- Account dropdown -->
+        <div class="relative group">
+          <button class="scale-95 active:opacity-80 transition-all text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-3xl">account_circle</span>
+            <span class="material-symbols-outlined text-sm transition-transform group-hover:rotate-180">expand_more</span>
+          </button>
+          <div class="absolute right-0 mt-2 w-48 bg-surface-container-high backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
+            <div class="p-4 border-b border-white/5">
+              <p id="userDisplay" class="text-sm font-bold text-on-surface truncate">User</p>
+              <p id="userRole" class="text-[10px] uppercase tracking-widest text-neutral-500">Member</p>
+            </div>
+            <div class="p-2">
+              <a href="#" class="flex items-center gap-3 px-3 py-2 text-sm text-on-surface hover:bg-white/5 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-lg">settings</span>Settings
+              </a>
+              <button id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-container hover:bg-primary-container/10 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-lg">logout</span>Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ PAGE CONTENT ═══════════════════ -->
+  {% block content %}{% endblock %}
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer class="bg-neutral-950 py-12">
+    <div class="max-w-6xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div class="col-span-2 md:col-span-1">
+        <span class="text-lg font-bold text-neutral-500 font-headline uppercase block mb-4">ReelMatch</span>
+        <p class="text-xs text-neutral-500 font-label">© 2025 ReelMatch. All Rights Reserved.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <a class="text-neutral-500 text-sm font-body hover:text-neutral-200 transition-colors" href="#">FAQ</a>
+        <a class="text-neutral-500 text-sm font-body hover:text-neutral-200 transition-colors" href="#">Help Center</a>
+        <a class="text-neutral-500 text-sm font-body hover:text-neutral-200 transition-colors" href="#">Terms of Use</a>
+      </div>
+      <div class="flex flex-col gap-3">
+        <a class="text-neutral-500 text-sm font-body hover:text-neutral-200 transition-colors" href="#">Privacy</a>
+        <a class="text-neutral-500 text-sm font-body hover:text-neutral-200 transition-colors" href="#">Cookie Preferences</a>
+      </div>
+      <div class="flex flex-col gap-4">
+        <span class="text-xs text-neutral-500 uppercase tracking-widest font-label">Connect</span>
+        <div class="flex gap-4">
+          <span class="material-symbols-outlined text-neutral-500 hover:text-white cursor-pointer transition-colors">public</span>
+          <span class="material-symbols-outlined text-neutral-500 hover:text-white cursor-pointer transition-colors">share</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════ TOAST CONTAINER ═══════════════════ -->
+  <div id="toast-container"></div>
+
+  <!-- ═══════════════════ SCROLL TO TOP ═══════════════════ -->
+  <button id="scrollTopBtn" title="Back to top" aria-label="Scroll to top">
+    <span class="material-symbols-outlined text-2xl">keyboard_arrow_up</span>
+  </button>
+
+  <!-- ═══════════════════ SHARED JS ═══════════════════ -->
+  <script src="{% static 'accounts/js/base.js' %}"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
