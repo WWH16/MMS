@@ -682,7 +682,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTopRatedCarousel(topRated);
   renderRandomMovies();
 
-  const heroMovie = topRated[0] || movies[0];
+/* Pick a random movie from the top-rated pool so the hero rotates each visit
+  const heroPool  = topRated.length ? topRated : movies.slice(0, 10);
+  const heroMovie = heroPool[Math.floor(Math.random() * heroPool.length)];
+  await renderHero(heroMovie, currentWatchlistIds); */
+    const heroMovie = topRated[0] || movies[0];
   await renderHero(heroMovie, currentWatchlistIds);
 
   renderGrid(movies, currentWatchlistIds, isStaff);
