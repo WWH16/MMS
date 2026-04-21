@@ -3,6 +3,13 @@
  * Loaded on every page via base.html
  */
 
+// Inject spin keyframe for button spinners
+(function() {
+  const s = document.createElement('style');
+  s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  document.head.appendChild(s);
+})();
+
 // ─── Auth bootstrap ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const username = localStorage.getItem('username') || 'User';
@@ -14,18 +21,55 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addMovieLink')?.classList.remove('hidden');
   }
 
-  // Logout
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    const btn   = document.getElementById('logoutBtn');
+// ── Sign-out modal ────────────────────────────────────────
+  const signoutModal    = document.getElementById('signoutModal');
+  const signoutCard     = document.getElementById('signoutModalCard');
+  const signoutCancelBtn  = document.getElementById('signoutCancelBtn');
+  const signoutConfirmBtn = document.getElementById('signoutConfirmBtn');
+
+  function openSignoutModal() {
+    signoutModal?.classList.remove('opacity-0', 'invisible');
+    signoutModal?.classList.add('opacity-100', 'visible');
+    signoutCard?.classList.remove('scale-95');
+    signoutCard?.classList.add('scale-100');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSignoutModal() {
+    signoutModal?.classList.add('opacity-0', 'invisible');
+    signoutModal?.classList.remove('opacity-100', 'visible');
+    signoutCard?.classList.add('scale-95');
+    signoutCard?.classList.remove('scale-100');
+    document.body.style.overflow = '';
+  }
+
+  // Clicking the nav "Sign Out" button opens the modal instead of acting directly
+  document.getElementById('logoutBtn')?.addEventListener('click', openSignoutModal);
+
+  // Cancel closes the modal
+  signoutCancelBtn?.addEventListener('click', closeSignoutModal);
+
+  // Click outside card closes
+  signoutModal?.addEventListener('click', (e) => {
+    if (e.target === signoutModal) closeSignoutModal();
+  });
+
+  // Escape key closes
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSignoutModal();
+  });
+
+  // Confirm: actually sign out
+  signoutConfirmBtn?.addEventListener('click', async () => {
     const token = localStorage.getItem('token');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Signing out…';
+    signoutConfirmBtn.disabled = true;
+    signoutConfirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 0.8s linear infinite;width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>Signing out…</span>';
     try {
       if (token) await fetch('/api/logout/', {
         method: 'POST',
         headers: { 'Authorization': `Token ${token}` }
       });
-    } catch { /* ignore */ }
+    } catch { /* ignore network errors — token cleared anyway */ }
     localStorage.clear();
     window.location.href = '/signin/';
   });

@@ -178,5 +178,32 @@
   <script src="{% static 'accounts/js/base.js' %}"></script>
 
   {% block extra_scripts %}{% endblock %}
+
+<!-- ═══════════════════ SIGN-OUT MODAL ═══════════════════ -->
+  <div id="signoutModal"
+       class="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 invisible transition-all duration-300">
+    <div id="signoutModalCard"
+         class="bg-surface-container rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-white/5 transition-transform duration-300 scale-95">
+      <div class="flex flex-col items-center text-center gap-4">
+        <div class="w-14 h-14 rounded-full bg-error-container/30 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl text-primary-container">logout</span>
+        </div>
+        <div>
+          <h3 class="text-xl font-headline font-extrabold text-on-surface mb-1">Sign Out?</h3>
+          <p class="text-neutral-400 font-body text-sm leading-relaxed">You'll need to sign back in to access your watchlist and recommendations.</p>
+        </div>
+        <div class="flex gap-3 w-full mt-2">
+          <button id="signoutCancelBtn"
+            class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-surface-bright text-on-surface hover:bg-surface-container-highest transition-all active:scale-95">
+            Cancel
+          </button>
+          <button id="signoutConfirmBtn"
+            class="flex-1 py-3 rounded-xl font-headline font-bold text-sm bg-primary-container text-on-primary-container hover:brightness-110 transition-all active:scale-95">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
