@@ -1,3 +1,14 @@
+# api/views.py
+# ─────────────────────────────────────────────────────────────────────────────
+# REST API views for ReelMatch:
+#   Auth      – signup, login, logout
+#   Movies    – paginated list + search
+#   Watchlist – per-user CRUD
+#   AI        – cosine-similarity recommendations
+#   TMDB      – backdrop / poster proxy
+#   Utils     – autocomplete suggestions
+# ─────────────────────────────────────────────────────────────────────────────
+
 from accounts.models import Movies, Watchlist
 from .serializers import MovieSerializer, UserSerializer, WatchlistSerializer
 
@@ -19,9 +30,15 @@ from django.core.paginator import Paginator
 from django.apps import apps
 
 
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup_view(request):
+    """
+    Register a new user and return a DRF token.
+    Body: { username, password }
+    """
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -41,10 +58,15 @@ def signup_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
+    """
+    Authenticate a user and return a DRF token.
+    Body: { username, password }
+    """
     username = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user:
+        # get_or_create so existing tokens are reused across sessions
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
             "token": token.key,
@@ -56,6 +78,10 @@ def login_view(request):
 
 @api_view(['GET', 'POST'])
 def movie_list(request):
+    """
+    Legacy non-paginated movie list (kept for backward-compat).
+    Staff-only POST to add a movie directly.
+    """
     if request.method == 'GET':
         movies = Movies.objects.all()
         serializer = MovieSerializer(movies, many=True)
@@ -70,20 +96,33 @@ def movie_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ── Movies ────────────────────────────────────────────────────────────────────
+
 class MovieListView(APIView):
+    """
+    GET /api/movies/
+    Returns a paginated list of movies sorted by rating descending.
+    Query params:
+        search  – filter by title or genre (case-insensitive)
+        page    – page number (24 results per page)
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
         movies = Movies.objects.all().order_by('-vote_average')
+
+        # Optional keyword filter across title and genre fields
         search = request.GET.get('search', '').strip()
         if search:
             movies = movies.filter(
                 Q(title__icontains=search) | Q(genres__icontains=search)
             )
+
         page_number = request.GET.get('page', 1)
-        paginator = Paginator(movies, 24)
+        paginator = Paginator(movies, 24)          # 24 cards per grid page
         page_obj = paginator.get_page(page_number)
         serializer = MovieSerializer(page_obj.object_list, many=True)
+
         return Response({
             "results": serializer.data,
             "has_next": page_obj.has_next(),
@@ -92,7 +131,13 @@ class MovieListView(APIView):
         })
 
 
+# ── Auth – Logout ─────────────────────────────────────────────────────────────
+
 class LogoutView(APIView):
+    """
+    POST /api/logout/
+    Deletes the user's auth token, effectively invalidating all sessions.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -100,10 +145,18 @@ class LogoutView(APIView):
         return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 
+# ── Watchlist ─────────────────────────────────────────────────────────────────
+
 @api_view(['GET', 'POST', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def my_list_view(request):
+    """
+    GET    /api/watchlist/  – Return all watchlist items for the authenticated user.
+    POST   /api/watchlist/  – Add a movie; body: { movie_id }
+    DELETE /api/watchlist/  – Remove a movie; body: { movie_id }
+    """
     if request.method == 'GET':
+        # select_related avoids N+1 queries when serialising movie details
         watchlist = Watchlist.objects.filter(user=request.user).select_related('movie')
         serializer = WatchlistSerializer(watchlist, many=True)
         return Response(serializer.data)
@@ -117,6 +170,7 @@ def my_list_view(request):
         except Movies.DoesNotExist:
             return Response({"error": "Movie not found"}, status=404)
 
+        # get_or_create prevents duplicate watchlist rows
         watchlist_item, created = Watchlist.objects.get_or_create(
             user=request.user,
             movie=movie
@@ -140,11 +194,22 @@ def my_list_view(request):
             return Response({"error": "Movie not in watchlist"}, status=404)
 
 
+# ── Recommendations ───────────────────────────────────────────────────────────
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def recommend_view(request):
+    """
+    GET /api/recommend/?title=<movie title>
+    Uses a pre-computed cosine-similarity matrix (loaded at startup in apps.py)
+    to return up to 10 movies most similar to the queried title.
+
+    Response shape:
+        { seed: MovieSerializer, recommendations: [...], similarity_scores: [...] }
+    """
     api_config = apps.get_app_config('api')
 
+    # Guard: model may still be loading on a fresh server start
     if not hasattr(api_config, 'cosine_sim') or api_config.cosine_sim is None:
         return Response({
             "error": "Recommendation engine is initializing. Please try again.",
@@ -155,6 +220,7 @@ def recommend_view(request):
     if not query:
         return Response({"error": "Query parameter 'title' is required."}, status=400)
 
+    # Exact match first; fallback to substring match
     if query not in api_config.movie_indices:
         matching_titles = [t for t in api_config.movie_indices.keys() if query in t]
         if matching_titles:
@@ -166,15 +232,19 @@ def recommend_view(request):
             }, status=404)
 
     idx = api_config.movie_indices[query]
+
+    # Sort all movies by similarity score, descending; skip index 0 (the seed itself)
     sim_scores = sorted(enumerate(api_config.cosine_sim[idx]), key=lambda x: x[1], reverse=True)
-    similar_indices = [i[0] for i in sim_scores[1:11]]
+    similar_indices  = [i[0] for i in sim_scores[1:11]]
     similarity_scores = [i[1] for i in sim_scores[1:11]]
 
-    recommended_ids = api_config.movies_df.iloc[similar_indices]['id'].tolist()
+    # Map DataFrame indices → DB rows, preserving similarity order
+    recommended_ids   = api_config.movies_df.iloc[similar_indices]['id'].tolist()
     recommended_movies = Movies.objects.filter(movie_id__in=recommended_ids)
     movie_dict = {m.movie_id: m for m in recommended_movies}
     ordered_movies = [movie_dict[mid] for mid in recommended_ids if mid in movie_dict]
 
+    # Fetch the seed movie so the UI can display "Because you searched for…"
     seed_id = api_config.movies_df.iloc[idx]['id']
     try:
         seed_movie = Movies.objects.get(movie_id=seed_id)
@@ -194,42 +264,50 @@ def recommend_view(request):
     })
 
 
+# ── TMDB Backdrop Proxy ───────────────────────────────────────────────────────
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 @throttle_classes([UserRateThrottle])
 def tmdb_backdrop_view(request):
+    """
+    GET /api/tmdb-backdrop/?movie_id=<imdb_id>&title=<title>
+    Proxies TMDB image lookups so the API key stays server-side.
+    Priority: IMDB ID lookup → title search fallback.
+    Throttled to prevent abuse of the TMDB quota.
+    """
     movie_id = request.query_params.get('movie_id', '').strip()
-    title = request.query_params.get('title', '').strip()
+    title    = request.query_params.get('title', '').strip()
 
     try:
-        # ✅ Prefer IMDB ID lookup — fast and accurate
+        # Primary: IMDB ID → TMDB /find/ (fast, unambiguous)
         if movie_id and movie_id.startswith('tt'):
             res = requests.get(
                 f'https://api.themoviedb.org/3/find/{movie_id}',
                 params={'api_key': settings.TMDB_API_KEY, 'external_source': 'imdb_id'},
                 timeout=5
             )
-            data = res.json()
+            data    = res.json()
             results = data.get('movie_results', [])
             if results:
-                r = results[0]
+                r       = results[0]
                 backdrop = r.get('backdrop_path')
-                poster = r.get('poster_path')
+                poster   = r.get('poster_path')
                 return Response({
                     "backdrop_url": f"https://image.tmdb.org/t/p/original{backdrop}" if backdrop else None,
-                    "poster_url": f"https://image.tmdb.org/t/p/w500{poster}" if poster else None,
-                    "overview": r.get('overview'),
+                    "poster_url":   f"https://image.tmdb.org/t/p/w500{poster}"        if poster   else None,
+                    "overview":     r.get('overview'),
                     "release_date": r.get('release_date'),
                 })
 
-        # Fallback: search by title
+        # Fallback: text search by title (less accurate for common names)
         if title:
             res = requests.get(
                 'https://api.themoviedb.org/3/search/movie',
                 params={'api_key': settings.TMDB_API_KEY, 'query': title},
                 timeout=5
             )
-            data = res.json()
+            data    = res.json()
             results = data.get('results', [])
             if results and results[0].get('backdrop_path'):
                 return Response({
@@ -237,17 +315,27 @@ def tmdb_backdrop_view(request):
                 })
 
         return Response({"backdrop_url": None})
+
     except Exception:
         return Response({"backdrop_url": None}, status=500)
 
 
+# ── Autocomplete ──────────────────────────────────────────────────────────────
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def movie_search_suggestions(request):
+    """
+    GET /api/suggestions/?q=<partial title>
+    Returns up to 8 movie titles matching the query (min 2 chars).
+    Used by the recommendations page search-as-you-type input.
+    """
     query = request.GET.get('q', '').strip()
     if len(query) < 2:
         return Response([])
+
     movies = Movies.objects.filter(
         title__icontains=query
     ).values('movie_id', 'title')[:8]
+
     return Response(list(movies))
