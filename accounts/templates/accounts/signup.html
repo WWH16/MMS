@@ -52,14 +52,13 @@
         position: relative;
         margin-top: 0.25rem;
       }
-      /* The visible input — keeps original #353534 bg and #e5e2e1 text */
       .md-outlined input {
         width: 100%;
-        background: #353534;               /* surface-container-highest */
-        border: 1.5px solid #5e3f3b;       /* outline-variant */
+        background: #353534;
+        border: 1.5px solid #3a3939;       /* Changed from #5e3f3b to neutral gray */
         border-radius: 0.5rem;
         padding: 1.1rem 1rem 0.6rem 1rem;
-        color: #e5e2e1;                    /* on-surface */
+        color: #e5e2e1;
         font-size: 0.95rem;
         font-family: 'Be Vietnam Pro', sans-serif;
         outline: none;
@@ -68,13 +67,16 @@
         caret-color: #ffb4aa;
       }
       .md-outlined input:focus {
-        border-color: #ffb4aa;             /* primary */
+        border-color: #ffb4aa;
         border-width: 2px;
+        outline: none !important;
+        box-shadow: none !important;
       }
-      /* Password reveal button tint */
-      .md-outlined input[type="password"]::-ms-reveal { filter: invert(1) brightness(2); }
+      .md-outlined input[type="password"]::-ms-reveal {
+        filter: invert(1) brightness(2);
+      }
 
-      /* Label — resting state: vertically centred inside the box */
+      /* Label — resting state */
       .md-outlined label {
         position: absolute;
         left: 0.9rem;
@@ -83,7 +85,7 @@
         transform-origin: left center;
         font-size: 0.95rem;
         font-family: 'Inter', sans-serif;
-        color: #71717a;                    /* zinc-500 — original placeholder colour */
+        color: #71717a;
         pointer-events: none;
         transition: top 0.18s ease, transform 0.18s ease, color 0.18s ease, background 0.18s ease;
         background: transparent;
@@ -92,23 +94,29 @@
         white-space: nowrap;
       }
 
-      /* Floating state: label rises to sit ON the top border line */
+      /* Floating state */
       .md-outlined input:focus + label,
       .md-outlined input:not(:placeholder-shown) + label {
         top: 0;
         transform: translateY(-50%) scale(0.78);
-        color: #ffb4aa;                    /* primary — original focused-label colour */
-        background: #353534;              /* same as input bg so it "cuts" the border */
+        color: #ffb4aa;
+        background: #353534;
         padding: 0 4px;
       }
 
-      /* Hide browser placeholder — our label acts as the placeholder */
-      .md-outlined input::placeholder { color: transparent; }
+      /* Hide browser placeholder */
+      .md-outlined input::placeholder {
+        color: transparent;
+      }
 
       /* Error state */
-      .md-outlined.has-error input               { border-color: #ffb4ab; }
+      .md-outlined.has-error input {
+        border-color: #ffb4ab;
+      }
       .md-outlined.has-error input:focus + label,
-      .md-outlined.has-error input:not(:placeholder-shown) + label { color: #ffb4ab; }
+      .md-outlined.has-error input:not(:placeholder-shown) + label {
+        color: #ffb4ab;
+      }
     </style>
   </head>
   <body class="bg-background font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">

@@ -49,26 +49,32 @@
       }
       @keyframes spin { to { transform: rotate(360deg); } }
 
-      /* ── Material Outlined Text Field ── */
-      .md-outlined {
-        position: relative;
-        margin-top: 0.25rem;
-      }
-      /* Input keeps original surface-container-highest bg + on-surface text */
-      .md-outlined input {
-        width: 100%;
-        background: #353534;
-        border: 1.5px solid #5e3f3b;
-        border-radius: 0.5rem;
-        padding: 1.1rem 1rem 0.6rem 1rem;
-        color: #e5e2e1;
-        font-size: 0.95rem;
-        font-family: 'Be Vietnam Pro', sans-serif;
-        outline: none;
-        transition: border-color 0.2s, border-width 0.1s;
-        box-sizing: border-box;
-        caret-color: #ffb4aa;
-      }
+    /* ── Material Outlined Text Field ── */
+    .md-outlined {
+      position: relative;
+      margin-top: 0.25rem;
+    }
+    /* Input keeps original surface-container-highest bg + on-surface text */
+    .md-outlined input {
+      width: 100%;
+      background: #353534;
+      border: 1.5px solid #3a3939;  /* Changed from #5e3f3b to neutral gray */
+      border-radius: 0.5rem;
+      padding: 1.1rem 1rem 0.6rem 1rem;
+      color: #e5e2e1;
+      font-size: 0.95rem;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, border-width 0.1s;
+      box-sizing: border-box;
+      caret-color: #ffb4aa;
+    }
+    .md-outlined input:focus {
+      border-color: #ffb4aa;
+      border-width: 2px;
+      outline: none !important;
+      box-shadow: none !important;
+    }
       .md-outlined input:focus {
         border-color: #ffb4aa;
         border-width: 2px;
@@ -104,8 +110,9 @@
       /* Hide native placeholder; our label acts as one */
       .md-outlined input::placeholder { color: transparent; }
 
-      /* Error state */
-      .md-outlined.has-error input               { border-color: #ffb4ab; }
+/* Error state — border only shows red after user interacts with the field */
+      .md-outlined.has-error input:focus,
+      .md-outlined.has-error input:not(:placeholder-shown) { border-color: #ffb4ab; }
       .md-outlined.has-error input:focus + label,
       .md-outlined.has-error input:not(:placeholder-shown) + label { color: #ffb4ab; }
     </style>
