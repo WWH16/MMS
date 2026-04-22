@@ -160,18 +160,6 @@
             type="submit">
             Sign In
           </button>
-
-          <!-- Remember me -->
-          <div class="flex items-center justify-between mt-2">
-            <label class="flex items-center space-x-2 cursor-pointer group">
-              <div class="relative flex items-center justify-center w-5 h-5 bg-surface-container-high rounded border border-outline-variant group-hover:border-primary transition-colors">
-                <input class="peer hidden" type="checkbox" id="rememberMe" />
-                <span class="material-symbols-outlined text-xs text-on-primary scale-0 peer-checked:scale-100 transition-transform">check</span>
-              </div>
-              <span class="text-zinc-400 text-xs font-label">Remember me</span>
-            </label>
-          </div>
-
         </form>
 
         <!-- Card footer -->
@@ -231,13 +219,9 @@
           const data = await response.json();
 
           if (response.ok) {
-            const rememberMe = document.getElementById('rememberMe').checked;
-            // Remember me checked → persist across browser restarts (localStorage)
-            // Unchecked → cleared when tab/browser closes (sessionStorage)
-            const store = rememberMe ? localStorage : sessionStorage;
-            store.setItem('token', data.token);
-            store.setItem('is_staff', data.is_staff);
-            store.setItem('username', data.username);
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('is_staff', data.is_staff);
+            localStorage.setItem('username', data.username);
             window.location.href = '/homeFeed/';
           } else {
             errorText.innerText = data.error || "Login failed.";
