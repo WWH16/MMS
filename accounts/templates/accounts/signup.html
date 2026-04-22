@@ -39,18 +39,81 @@
       };
     </script>
     <style>
-        input[type="password"]::-ms-reveal,
-        input[type="password"]::-webkit-password-eye {
-          filter: invert(1) brightness(2);
-        }
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
       .cinematic-overlay {
         background: linear-gradient(to top, rgba(19,19,19,0.9) 0%, rgba(19,19,19,0.4) 50%, rgba(19,19,19,0.8) 100%);
       }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Material Outlined Text Field ── */
+      .md-outlined {
+        position: relative;
+        margin-top: 0.25rem;
+      }
+      /* The visible input — keeps original #353534 bg and #e5e2e1 text */
+      .md-outlined input {
+        width: 100%;
+        background: #353534;               /* surface-container-highest */
+        border: 1.5px solid #5e3f3b;       /* outline-variant */
+        border-radius: 0.5rem;
+        padding: 1.1rem 1rem 0.6rem 1rem;
+        color: #e5e2e1;                    /* on-surface */
+        font-size: 0.95rem;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        outline: none;
+        transition: border-color 0.2s, border-width 0.1s;
+        box-sizing: border-box;
+        caret-color: #ffb4aa;
+      }
+      .md-outlined input:focus {
+        border-color: #ffb4aa;             /* primary */
+        border-width: 2px;
+      }
+      /* Password reveal button tint */
+      .md-outlined input[type="password"]::-ms-reveal { filter: invert(1) brightness(2); }
+
+      /* Label — resting state: vertically centred inside the box */
+      .md-outlined label {
+        position: absolute;
+        left: 0.9rem;
+        top: 50%;
+        transform: translateY(-50%) scale(1);
+        transform-origin: left center;
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+        color: #71717a;                    /* zinc-500 — original placeholder colour */
+        pointer-events: none;
+        transition: top 0.18s ease, transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+        background: transparent;
+        padding: 0;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      /* Floating state: label rises to sit ON the top border line */
+      .md-outlined input:focus + label,
+      .md-outlined input:not(:placeholder-shown) + label {
+        top: 0;
+        transform: translateY(-50%) scale(0.78);
+        color: #ffb4aa;                    /* primary — original focused-label colour */
+        background: #353534;              /* same as input bg so it "cuts" the border */
+        padding: 0 4px;
+      }
+
+      /* Hide browser placeholder — our label acts as the placeholder */
+      .md-outlined input::placeholder { color: transparent; }
+
+      /* Error state */
+      .md-outlined.has-error input               { border-color: #ffb4ab; }
+      .md-outlined.has-error input:focus + label,
+      .md-outlined.has-error input:not(:placeholder-shown) + label { color: #ffb4ab; }
     </style>
   </head>
   <body class="bg-background font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
 
-    <!-- Background — same as signin -->
+    <!-- Background -->
     <div class="fixed inset-0 z-0 overflow-hidden">
       <img alt="" class="w-full h-full object-cover scale-105"
         src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz8LJh3Ba8INECTPowNfLIiXQxtSwZxrmPMcW768F6fe74d6SISS_rGRrOxVnWOCoU6up7tEyVlMzEaMhnb7bJhzyBz8pQLBtPNbq_KifNsSDVnYZD3dRHFqSTWRkRsGGyV5lW9J4Wab7ZWJ822SgaeP22keE2wIy2lu6C2hPGnpBkPWZ8jmfa9MR4CRGLDuUTFLHsoUbzwtMlbtKlwVQmqwCcrzO6Q4u50EkrXThc53scf94gk4KeAN-595ANV4fOMJvxvNWcdoEc" />
@@ -69,46 +132,35 @@
         <h1 class="text-3xl font-extrabold text-on-surface mb-2 font-headline tracking-tight">Create Account</h1>
         <p class="text-on-surface/50 text-sm font-label mb-8">Start discovering films made for you.</p>
 
-        <form id="signupForm" class="space-y-4">
+        <form id="signupForm" class="space-y-5">
 
           <!-- Username -->
-          <div class="relative group">
-            <input
-              class="peer w-full bg-surface-container-highest border-b-2 border-transparent px-4 pt-6 pb-2 text-on-surface focus:outline-none focus:border-primary transition-all duration-300 rounded-lg"
-              id="username" placeholder=" " type="text" required />
-            <label class="absolute left-4 top-4 text-zinc-500 text-sm font-medium transition-all duration-300 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary-fixed-dim peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs" for="username">
-              Username
-            </label>
+          <div class="md-outlined">
+            <input id="username" type="text" placeholder=" " required autocomplete="username" />
+            <label for="username">Username</label>
           </div>
-          <p id="username-error" class="text-red-500 text-xs hidden -mt-2"></p>
+          <p id="username-error" class="text-red-500 text-xs hidden !mt-1"></p>
 
           <!-- Password -->
-          <div class="relative group">
-            <input
-              class="peer w-full bg-surface-container-highest border-b-2 border-transparent px-4 pt-6 pb-2 text-on-surface focus:outline-none focus:border-primary transition-all duration-300 rounded-lg"
-              id="password" placeholder=" " type="password" required />
-            <label class="absolute left-4 top-4 text-zinc-500 text-sm font-medium transition-all duration-300 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary-fixed-dim peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs" for="password">
-              Password
-            </label>
+          <div class="md-outlined">
+            <input id="password" type="password" placeholder=" " required autocomplete="new-password" />
+            <label for="password">Password</label>
           </div>
-          <p id="password-error" class="text-red-500 text-xs hidden -mt-2"></p>
+          <p id="password-error" class="text-red-500 text-xs hidden !mt-1"></p>
 
           <!-- Confirm Password -->
-          <div class="relative group">
-            <input
-              class="peer w-full bg-surface-container-highest border-b-2 border-transparent px-4 pt-6 pb-2 text-on-surface focus:outline-none focus:border-primary transition-all duration-300 rounded-lg"
-              id="confirm_password" placeholder=" " type="password" required />
-            <label class="absolute left-4 top-4 text-zinc-500 text-sm font-medium transition-all duration-300 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary-fixed-dim peer-[:not(:placeholder-shown)]:top-1 peer-[:not(:placeholder-shown)]:text-xs" for="confirm_password">
-              Confirm Password
-            </label>
+          <div class="md-outlined">
+            <input id="confirm_password" type="password" placeholder=" " required autocomplete="new-password" />
+            <label for="confirm_password">Confirm Password</label>
           </div>
-          <p id="confirm-error" class="text-red-500 text-xs hidden -mt-2"></p>
+          <p id="confirm-error" class="text-red-500 text-xs hidden !mt-1"></p>
 
           <button id="signupBtn"
-            class="w-full bg-primary-container text-on-primary-container font-extrabold py-3.5 rounded-lg hover:opacity-90 active:scale-95 transition-all duration-200 mt-6 shadow-lg shadow-primary-container/20"
+            class="w-full bg-primary-container text-on-primary-container font-extrabold py-3.5 rounded-lg hover:opacity-90 active:scale-95 transition-all duration-200 mt-2 shadow-lg shadow-primary-container/20"
             type="submit">
             Create Account
           </button>
+
         </form>
 
         <div class="mt-10 space-y-2">
@@ -135,22 +187,25 @@
       document.getElementById('signupForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Clear previous errors
+        // Clear previous errors and remove error state from fields
         document.querySelectorAll('[id$="-error"]').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.md-outlined').forEach(el => el.classList.remove('has-error'));
 
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        const username        = document.getElementById('username').value;
+        const password        = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirm_password').value;
-        const signupBtn = document.getElementById('signupBtn');
+        const signupBtn       = document.getElementById('signupBtn');
 
+        // Client-side password match check
         if (password !== confirmPassword) {
           const el = document.getElementById('confirm-error');
           el.innerText = "Passwords do not match.";
           el.classList.remove('hidden');
+          document.getElementById('confirm_password').closest('.md-outlined').classList.add('has-error');
           return;
         }
 
-        signupBtn.innerText = "Creating Account...";
+        signupBtn.innerHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;gap:8px;"><svg style="animation:spin 0.8s linear infinite;width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>Creating Account…</span>';
         signupBtn.disabled = true;
 
         try {
@@ -172,10 +227,12 @@
               const el = document.getElementById('username-error');
               el.innerText = data.username[0];
               el.classList.remove('hidden');
+              document.getElementById('username').closest('.md-outlined').classList.add('has-error');
             } else if (data.password) {
               const el = document.getElementById('password-error');
               el.innerText = data.password[0];
               el.classList.remove('hidden');
+              document.getElementById('password').closest('.md-outlined').classList.add('has-error');
             } else {
               alert(data.error || "Signup failed.");
             }
@@ -183,8 +240,8 @@
         } catch (err) {
           alert("Connection error. Is the server running?");
         } finally {
-          signupBtn.innerText = "Create Account";
-          signupBtn.disabled = false;
+          signupBtn.innerHTML = "Create Account";
+          signupBtn.disabled  = false;
         }
       });
     </script>
