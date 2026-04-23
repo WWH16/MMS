@@ -4,8 +4,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const token    = localStorage.getItem('token');
-  const username = localStorage.getItem('username') || 'User';
+  const token    = window.getAuthToken();
+  if (!token) { window.location.href = '/signin/'; return; }
+
+  const username = window.getAuthUser();
   document.querySelectorAll('#userDisplay').forEach(el => el.textContent = username);
 
   const params = new URLSearchParams(window.location.search);
@@ -134,7 +136,7 @@ function renderResults(movies, watchlistIds) {
 }
 
 window._recsWatchlistClick = function(btn, movieId) {
-  const token = localStorage.getItem('token');
+  const token = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
 
   window.toggleWatchlist(btn, movieId, {

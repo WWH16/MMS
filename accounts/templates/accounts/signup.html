@@ -238,6 +238,14 @@
           const data = await response.json();
 
           if (response.ok) {
+            // Clear both first to avoid stale data
+            localStorage.removeItem('token');
+            localStorage.removeItem('is_staff');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('is_staff');
+            sessionStorage.removeItem('username');
+
             localStorage.setItem('token', data.token);
             localStorage.setItem('is_staff', data.is_staff);
             localStorage.setItem('username', data.username);

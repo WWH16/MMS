@@ -615,8 +615,10 @@ window.handleRecommend = function(title) {
 
 // ─── Init ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  const token   = localStorage.getItem('token');
-  const isStaff = localStorage.getItem('is_staff') === 'true';
+  const token   = window.getAuthToken();
+  if (!token) { window.location.href = '/signin/'; return; }
+  
+  const isStaff = window.getAuthIsStaff();
   currentIsStaff = isStaff;
 
   // Modal events
@@ -740,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchRandomMoviesFromAPI() {
   try {
-    const token = localStorage.getItem('token');
+    const token = window.getAuthToken();
     const res = await fetch('/api/movies/?page=1&page_size=50',
       { headers: token ? { 'Authorization': `Token ${token}` } : {} });
     if (res.ok) {

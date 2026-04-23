@@ -11,9 +11,13 @@
 })();
 
 // ─── Auth bootstrap ────────────────────────────────────────────────
+window.getAuthToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+window.getAuthUser  = () => localStorage.getItem('username') || sessionStorage.getItem('username') || 'User';
+window.getAuthIsStaff = () => (localStorage.getItem('is_staff') || sessionStorage.getItem('is_staff')) === 'true';
+
 document.addEventListener('DOMContentLoaded', () => {
-  const username = localStorage.getItem('username') || 'User';
-  const isStaff  = localStorage.getItem('is_staff') === 'true';
+  const username = window.getAuthUser();
+  const isStaff  = window.getAuthIsStaff();
 
   document.querySelectorAll('#userDisplay').forEach(el => el.textContent = username);
   if (isStaff) {
@@ -61,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Confirm: actually sign out
   signoutConfirmBtn?.addEventListener('click', async () => {
-    const token = localStorage.getItem('token');
+    const token = window.getAuthToken();
     signoutConfirmBtn.disabled = true;
     signoutConfirmBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 0.8s linear infinite;width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>Signing out…</span>';
     try {
@@ -70,7 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Authorization': `Token ${token}` }
       });
     } catch { /* ignore network errors — token cleared anyway */ }
-    localStorage.clear();
+    
+    // Clear everything
+    localStorage.removeItem('token');
+    localStorage.removeItem('is_staff');
+    localStorage.removeItem('username');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('is_staff');
+    sessionStorage.removeItem('username');
+    
     window.location.href = '/signin/';
   });
 
@@ -130,7 +142,7 @@ window.showToast = function showToast(message, type = 'success') {
  * options.onSuccess – optional callback(nowInList)
  */
 window.toggleWatchlist = async function toggleWatchlist(btn, movieId, options = {}) {
-  const token = localStorage.getItem('token');
+  const token = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
 
   const { isHero = false, isModal = false, onSuccess } = options;

@@ -30,7 +30,7 @@ function closeRemoveModal() {
 }
 
 async function doRemove(movieId) {
-  const token = localStorage.getItem('token');
+  const token = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
 
   try {
@@ -52,7 +52,7 @@ async function doRemove(movieId) {
 }
 
 async function fetchWatchlist() {
-  const token = localStorage.getItem('token');
+  const token = window.getAuthToken();
   const grid  = document.getElementById('movieGrid');
 
   grid.innerHTML = `
@@ -68,6 +68,7 @@ async function fetchWatchlist() {
       renderMovies(await res.json());
     } else if (res.status === 401) {
       localStorage.clear();
+      sessionStorage.clear();
       window.location.href = '/signin/';
     } else {
       renderMovies([]);
@@ -138,7 +139,7 @@ function renderMovies(watchlistItems) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('token');
+  const token = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
 
   document.getElementById('removeCancelBtn')?.addEventListener('click', closeRemoveModal);

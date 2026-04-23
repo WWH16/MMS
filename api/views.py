@@ -17,7 +17,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -104,6 +104,7 @@ def login_view(request):
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user:
+        login(request, user)  # Establish server-side session
         # get_or_create so existing tokens are reused across sessions
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
@@ -180,6 +181,7 @@ class LogoutView(APIView):
 
     def post(self, request):
         request.user.auth_token.delete()
+        logout(request)  # Clear server-side session
         return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 

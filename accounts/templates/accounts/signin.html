@@ -157,8 +157,17 @@
             <label for="password">Password</label>
           </div>
 
+          <!-- Remember Me & Help -->
+          <div class="flex items-center justify-between !mt-4">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary-container focus:ring-primary-container focus:ring-offset-background transition-all" />
+              <span class="text-xs font-label text-zinc-400 group-hover:text-on-surface transition-colors">Remember me</span>
+            </label>
+            <a href="#" class="text-xs font-label text-zinc-500 hover:text-on-surface transition-colors">Need help?</a>
+          </div>
+
           <!-- Error message -->
-          <p id="error-text" class="text-red-500 text-xs hidden !mt-1"></p>
+          <p id="error-text" class="text-red-500 text-xs hidden !mt-3"></p>
 
           <!-- Submit -->
           <button id="submitBtn"
@@ -192,13 +201,23 @@
     </footer>
 
     <script>
+      // Prefill username if remembered
+      document.addEventListener('DOMContentLoaded', () => {
+        const rememberedUser = localStorage.getItem('remembered_username');
+        if (rememberedUser) {
+          document.getElementById('username').value = rememberedUser;
+          document.getElementById('rememberMe').checked = true;
+        }
+      });
+
       document.getElementById('signinForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const username  = document.getElementById('username').value;
-        const password  = document.getElementById('password').value;
-        const errorText = document.getElementById('error-text');
-        const submitBtn = document.getElementById('submitBtn');
+        const username   = document.getElementById('username').value;
+        const password   = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+        const errorText  = document.getElementById('error-text');
+        const submitBtn  = document.getElementById('submitBtn');
 
         // Clear previous error state
         errorText.classList.add('hidden');
@@ -226,23 +245,36 @@
           const data = await response.json();
 
           if (response.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('is_staff', data.is_staff);
-            localStorage.setItem('username', data.username);
+            const storage = rememberMe ? localStorage : sessionStorage;
+            
+            // Clear both first to avoid stale data in the other storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('is_staff');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('is_staff');
+            sessionStorage.removeItem('username');
+
+            // Set new data
+            storage.setItem('token', data.token);
+            storage.setItem('is_staff', data.is_staff);
+            storage.setItem('username', data.username);
+
+            if (rememberMe) {
+              localStorage.setItem('remembered_username', data.username);
+            } else {
+              localStorage.removeItem('remembered_username');
+            }
+
             window.location.href = '/homeFeed/';
           } else {
             errorText.innerText = data.error || "Login failed.";
             errorText.classList.remove('hidden');
-            // Highlight both fields on auth failure
             document.querySelectorAll('.md-outlined').forEach(el => el.classList.add('has-error'));
           }
         } catch (err) {
           console.error('Sign-in error:', err);
-          if (err.message && err.message.includes('reCAPTCHA')) {
-            errorText.innerText = err.message;
-          } else {
-            errorText.innerText = "Connection error. Is the server running?";
-          }
+          errorText.innerText = err.message || "Connection error. Is the server running?";
           errorText.classList.remove('hidden');
         } finally {
           submitBtn.innerHTML = "Sign In";
