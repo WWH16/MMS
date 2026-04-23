@@ -476,70 +476,108 @@ function renderRandomMovies() {
 
 async function renderHero(movie, watchlistIds) {
   if (!movie) return;
+  
+  const heroContent = document.getElementById('heroContent');
+  if (heroContent) {
+    heroContent.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+    heroContent.style.opacity = '0';
+    heroContent.style.transform = 'translateY(10px)';
+  }
+
   heroMovieId = movie.movie_id;
   const rating = parseFloat(movie.vote_average || 0).toFixed(1);
   const year   = movie.release_date?.split('-')[0] || 'N/A';
 
-  document.getElementById('heroTitle')?.   setAttribute('textContent', movie.title.toUpperCase());
   const titleEl    = document.getElementById('heroTitle');
   const overviewEl = document.getElementById('heroOverview');
   const metaEl     = document.getElementById('heroMeta');
   const imgEl      = document.getElementById('heroImg');
 
-  if (titleEl)    titleEl.textContent    = movie.title.toUpperCase();
-  if (overviewEl) overviewEl.textContent = movie.overview || '';
-  if (metaEl)     metaEl.textContent     = `${parseGenre(movie)} • ${year} • ⭐ ${rating}`;
-  if (imgEl)      imgEl.src              = getPoster(movie);
-
+  // Fetch backdrop first to prevent flickering
+  let backdropUrl = getPoster(movie);
   try {
     const res  = await fetch(`/api/tmdb-backdrop/?movie_id=${encodeURIComponent(movie.movie_id)}&title=${encodeURIComponent(movie.title)}`);
     const data = await res.json();
-    if (imgEl && data.backdrop_url) imgEl.src = data.backdrop_url;
-  } catch { /* keep poster */ }
+    if (data.backdrop_url) backdropUrl = data.backdrop_url;
+  } catch {}
 
-  const inList = watchlistIds.has(movie.movie_id);
-  const btn    = document.getElementById('heroWatchlistBtn');
-  if (btn) {
-    btn.dataset.inList = inList;
-    btn.innerHTML = inList
-      ? `<span class="material-symbols-outlined">bookmark_added</span> SAVED`
-      : `<span class="material-symbols-outlined">bookmark</span> ADD TO LIST`;
-    btn.onclick = () => window.toggleWatchlist(btn, movie.movie_id, {
-      isHero: true,
-      onSuccess: (nowInList) => {
-        if (nowInList) currentWatchlistIds.add(movie.movie_id);
-        else           currentWatchlistIds.delete(movie.movie_id);
-      }
-    });
-  }
+  // After brief delay or backdrop load, update and fade in
+  setTimeout(() => {
+    if (titleEl)    titleEl.textContent    = movie.title.toUpperCase();
+    if (overviewEl) overviewEl.textContent = movie.overview || '';
+    if (metaEl)     metaEl.textContent     = `${parseGenre(movie)} • ${year} • ⭐ ${rating}`;
+    if (imgEl)      imgEl.src              = backdropUrl;
 
-  const recBtn = document.getElementById('heroRecommendBtn');
-  if (recBtn) recBtn.onclick = () => handleRecommend(movie.title);
-
-  // Add watch button to hero
-  const heroButtonsContainer = document.querySelector('.flex.gap-3.md\\:gap-4.items-center.flex-wrap');
-  if (heroButtonsContainer) {
-    // Remove existing watch button if any
-    const existingHeroWatch = document.getElementById('heroWatchBtn');
-    if (existingHeroWatch) existingHeroWatch.remove();
-
-    // Create watch button
-    const heroWatchBtn = document.createElement('button');
-    heroWatchBtn.id = 'heroWatchBtn';
-    heroWatchBtn.className = 'bg-green-600 text-white px-10 py-3 rounded-lg font-headline font-bold flex items-center gap-2 hover:bg-green-700 active:scale-95 transition-all';
-    heroWatchBtn.innerHTML = `
-      <span class="material-symbols-outlined text-sm">play_circle</span>
-      Watch Trailer
-    `;
-    heroWatchBtn.onclick = () => handleWatch(movie.title, year !== 'N/A' ? year : null);
-
-    // Insert before the recommend button
-    if (recBtn) {
-      heroButtonsContainer.insertBefore(heroWatchBtn, recBtn);
-    } else {
-      heroButtonsContainer.appendChild(heroWatchBtn);
+    const inList = watchlistIds.has(movie.movie_id);
+    const btn    = document.getElementById('heroWatchlistBtn');
+    if (btn) {
+      btn.dataset.inList = inList;
+      btn.innerHTML = inList
+        ? `<span class="material-symbols-outlined">bookmark_added</span> SAVED`
+        : `<span class="material-symbols-outlined">bookmark</span> ADD TO LIST`;
+      btn.onclick = () => window.toggleWatchlist(btn, movie.movie_id, {
+        isHero: true,
+        onSuccess: (nowInList) => {
+          if (nowInList) currentWatchlistIds.add(movie.movie_id);
+          else           currentWatchlistIds.delete(movie.movie_id);
+        }
+      });
     }
-  }
+// After setting overviewEl.textContent:
+const readMoreBtn = document.getElementById('heroReadMoreBtn');
+const readMoreLabel = document.getElementById('heroReadMoreLabel');
+const readMoreIcon = document.getElementById('heroReadMoreIcon');
+
+if (readMoreBtn && overviewEl) {
+  // Reset state on hero change
+  overviewEl.classList.add('line-clamp-3', 'md:line-clamp-4');
+  readMoreBtn.dataset.expanded = 'false';
+  readMoreLabel.textContent = 'Read more';
+  readMoreIcon.textContent = 'expand_more';
+
+  // Show button only if text is actually clamped
+  requestAnimationFrame(() => {
+    const isClamped = overviewEl.scrollHeight > overviewEl.clientHeight;
+    readMoreBtn.classList.toggle('hidden', !isClamped);
+  });
+
+  readMoreBtn.onclick = () => {
+    const expanded = readMoreBtn.dataset.expanded === 'true';
+    if (expanded) {
+      overviewEl.classList.add('line-clamp-3', 'md:line-clamp-4');
+      readMoreLabel.textContent = 'Read more';
+      readMoreIcon.textContent = 'expand_more';
+      readMoreBtn.dataset.expanded = 'false';
+    } else {
+      overviewEl.classList.remove('line-clamp-3', 'md:line-clamp-4');
+      readMoreLabel.textContent = 'Show less';
+      readMoreIcon.textContent = 'expand_less';
+      readMoreBtn.dataset.expanded = 'true';
+    }
+  };
+}
+    const recBtn = document.getElementById('heroRecommendBtn');
+    if (recBtn) recBtn.onclick = () => handleRecommend(movie.title);
+
+    // Watch button
+    const heroButtonsContainer = document.querySelector('.flex.gap-3.md\\:gap-4.items-center.flex-wrap');
+    if (heroButtonsContainer) {
+      const existingHeroWatch = document.getElementById('heroWatchBtn');
+      if (existingHeroWatch) existingHeroWatch.remove();
+      const heroWatchBtn = document.createElement('button');
+      heroWatchBtn.id = 'heroWatchBtn';
+      heroWatchBtn.className = 'bg-green-600 text-white px-10 py-3 rounded-lg font-headline font-bold flex items-center gap-2 hover:bg-green-700 active:scale-95 transition-all';
+      heroWatchBtn.innerHTML = `<span class="material-symbols-outlined text-sm">play_circle</span> Watch Trailer`;
+      heroWatchBtn.onclick = () => handleWatch(movie.title, year !== 'N/A' ? year : null);
+      if (recBtn) heroButtonsContainer.insertBefore(heroWatchBtn, recBtn);
+      else heroButtonsContainer.appendChild(heroWatchBtn);
+    }
+
+    if (heroContent) {
+      heroContent.style.opacity = '1';
+      heroContent.style.transform = 'translateY(0)';
+    }
+  }, 300);
 }
 
 // ─── Filters ──────────────────────────────────────────────────────
@@ -684,11 +722,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTopRatedCarousel(topRated);
   renderRandomMovies();
 
-/* Pick a random movie from the top-rated pool so the hero rotates each visit
+  // Shuffle button
+  const shuffleBtn = document.getElementById('heroShuffleBtn');
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', () => {
+      const heroPool = topRated.length ? topRated : movies.slice(0, 10);
+      const randomMovie = heroPool[Math.floor(Math.random() * heroPool.length)];
+      renderHero(randomMovie, currentWatchlistIds);
+    });
+  }
+
+  // Initial hero
   const heroPool  = topRated.length ? topRated : movies.slice(0, 10);
   const heroMovie = heroPool[Math.floor(Math.random() * heroPool.length)];
-  await renderHero(heroMovie, currentWatchlistIds); */
-    const heroMovie = topRated[0] || movies[0];
   await renderHero(heroMovie, currentWatchlistIds);
 
   renderGrid(movies, currentWatchlistIds, isStaff);
