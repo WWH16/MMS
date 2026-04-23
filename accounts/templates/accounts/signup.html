@@ -4,40 +4,14 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Sign Up | ReelMatch</title>
+    <!-- Tailwind CDN — must load BEFORE the config script -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    {% load static %}
+    <!-- Tailwind theme config (single source of truth for all pages) -->
+    <script src="{% static 'accounts/js/Tailwind.config.js' %}"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Be+Vietnam+Pro:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "inverse-on-surface": "#313030", "on-secondary-fixed-variant": "#8e1210",
-              "inverse-primary": "#c0000c", "primary-fixed": "#ffdad5", "error-container": "#93000a",
-              background: "#131313", "surface-container-low": "#1c1b1b", "primary-container": "#e50914",
-              "surface-container-high": "#2a2a2a", primary: "#ffb4aa", "on-primary-fixed": "#410001",
-              tertiary: "#a7c8ff", "on-error": "#690005", "surface-bright": "#3a3939",
-              outline: "#af8782", "on-secondary-container": "#ff9f93", "on-tertiary-fixed-variant": "#004689",
-              "surface-container": "#201f1f", "on-secondary": "#690003", surface: "#131313",
-              "on-primary-fixed-variant": "#930007", "on-surface": "#e5e2e1", "inverse-surface": "#e5e2e1",
-              "surface-container-highest": "#353534", "secondary-container": "#921512",
-              "on-background": "#e5e2e1", "secondary-fixed": "#ffdad5", "tertiary-fixed": "#d5e3ff",
-              "surface-dim": "#131313", "tertiary-container": "#0072d7", error: "#ffb4ab",
-              "on-primary-container": "#fff7f6", "surface-tint": "#ffb4aa", "on-primary": "#690003",
-              "surface-container-lowest": "#0e0e0e", secondary: "#ffb4aa",
-              "on-tertiary-container": "#f8f9ff", "primary-fixed-dim": "#ffb4aa",
-              "secondary-fixed-dim": "#ffb4aa", "on-error-container": "#ffdad6",
-              "tertiary-fixed-dim": "#a7c8ff", "surface-variant": "#353534",
-              "on-tertiary": "#003061", "outline-variant": "#5e3f3b",
-              "on-tertiary-fixed": "#001b3c", "on-surface-variant": "#e9bcb6", "on-secondary-fixed": "#410001",
-            },
-            borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
-            fontFamily: { headline: ["Manrope"], body: ["Be Vietnam Pro"], label: ["Inter"] },
-          },
-        },
-      };
-    </script>
     <style>
       .material-symbols-outlined {
         font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
