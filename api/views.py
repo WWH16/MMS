@@ -37,8 +37,25 @@ from django.apps import apps
 def signup_view(request):
     """
     Register a new user and return a DRF token.
-    Body: { username, password }
+    Body: { username, password, recaptcha_token }
     """
+    recaptcha_token = request.data.get('recaptcha_token')
+    if not recaptcha_token:
+        return Response({"error": "reCAPTCHA token missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Verify reCAPTCHA
+    verify_response = requests.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        data={
+            'secret': settings.RECAPTCHA_SECRET_KEY,
+            'response': recaptcha_token
+        }
+    )
+    verify_data = verify_response.json()
+
+    if not verify_data.get('success') or verify_data.get('score', 1.0) < 0.5:
+        return Response({"error": "reCAPTCHA verification failed or low score"}, status=status.HTTP_400_BAD_REQUEST)
+
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         try:
@@ -60,8 +77,29 @@ def signup_view(request):
 def login_view(request):
     """
     Authenticate a user and return a DRF token.
-    Body: { username, password }
+    Body: { username, password, recaptcha_token }
     """
+    recaptcha_token = request.data.get('recaptcha_token')
+    if not recaptcha_token:
+        return Response({"error": "reCAPTCHA token missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Verify reCAPTCHA
+    verify_response = requests.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        data={
+            'secret': settings.RECAPTCHA_SECRET_KEY,
+            'response': recaptcha_token
+        }
+    )
+    verify_data = verify_response.json()
+
+    if not verify_data.get('success'):
+        return Response({"error": "reCAPTCHA verification failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Optional: check score for v3 (threshold usually 0.5)
+    if verify_data.get('score', 1.0) < 0.5:
+        return Response({"error": "Low reCAPTCHA score"}, status=status.HTTP_403_FORBIDDEN)
+
     username = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(username=username, password=password)

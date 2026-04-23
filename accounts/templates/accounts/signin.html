@@ -111,10 +111,14 @@
       .md-outlined input::placeholder { color: transparent; }
 
 /* Error state — border only shows red after user interacts with the field */
-      .md-outlined.has-error input:focus,
-      .md-outlined.has-error input:not(:placeholder-shown) { border-color: #ffb4ab; }
+      .md-outlined.has-error input:focus + label,
+      .md-outlined.has-error input:not(:placeholder-shown) + label { border-color: #ffb4ab; }
       .md-outlined.has-error input:focus + label,
       .md-outlined.has-error input:not(:placeholder-shown) + label { color: #ffb4ab; }
+      /* Ensure reCAPTCHA v3 badge is visible */
+      .grecaptcha-badge { 
+        z-index: 9999 !important; 
+      }
     </style>
   </head>
   <body class="bg-background font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
@@ -130,6 +134,8 @@
     <header class="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-6 bg-transparent backdrop-blur-xl">
       <a href="{% url 'index' %}" class="text-2xl font-black text-red-600 tracking-tighter font-headline uppercase">ReelMatch</a>
     </header>
+
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 
     <!-- Main -->
     <main class="relative z-10 flex min-h-screen items-center justify-center px-6 pt-24 pb-12">
@@ -168,10 +174,6 @@
             <span class="text-zinc-500 font-label">New to ReelMatch?</span>
             <a class="text-on-surface font-bold hover:underline" href="{% url 'signup' %}">Sign up now.</a>
           </div>
-          <p class="text-[10px] text-zinc-600 leading-relaxed font-label">
-            This page is protected by Google reCAPTCHA to ensure you're not a bot.
-            <button class="text-tertiary-container hover:underline ml-1">Learn more.</button>
-          </p>
         </div>
 
       </div>
@@ -202,18 +204,23 @@
         errorText.classList.add('hidden');
         document.querySelectorAll('.md-outlined').forEach(el => el.classList.remove('has-error'));
 
-        // Show spinner
         submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;gap:8px;"><svg style="animation:spin 0.8s linear infinite;width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>Signing in…</span>';
         submitBtn.disabled = true;
 
         try {
+          if (typeof grecaptcha === 'undefined') {
+            throw new Error('reCAPTCHA not loaded. Check your site key and internet connection.');
+          }
+          
+          const recaptchaToken = await grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'login'});
+
           const response = await fetch('/api/login/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, recaptcha_token: recaptchaToken })
           });
 
           const data = await response.json();
@@ -230,7 +237,12 @@
             document.querySelectorAll('.md-outlined').forEach(el => el.classList.add('has-error'));
           }
         } catch (err) {
-          errorText.innerText = "Connection error. Is the server running?";
+          console.error('Sign-in error:', err);
+          if (err.message && err.message.includes('reCAPTCHA')) {
+            errorText.innerText = err.message;
+          } else {
+            errorText.innerText = "Connection error. Is the server running?";
+          }
           errorText.classList.remove('hidden');
         } finally {
           submitBtn.innerHTML = "Sign In";
