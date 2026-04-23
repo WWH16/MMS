@@ -59,12 +59,12 @@ class WatchResolver:
                     video_id = item['id']['videoId']
                     # Check if video is actually embeddable
                     if self._is_embeddable(video_id):
-                        # Use youtube-nocookie.com with proper parameters
-                        return f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&origin={self._get_origin()}&enablejsapi=1"
+                        # Use youtube-nocookie.com without origin if causing issues, or use a flexible origin
+                        return f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1"
 
                 # If no embeddable video found in first few, return first one anyway
                 video_id = data['items'][0]['id']['videoId']
-                return f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&origin={self._get_origin()}&enablejsapi=1"
+                return f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1"
 
             return None
 

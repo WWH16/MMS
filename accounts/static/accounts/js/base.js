@@ -215,6 +215,25 @@ function _updateModalWatchlistBtn(btn, inList) {
 window._updateModalWatchlistBtn = _updateModalWatchlistBtn;
 
 
+// ─── Shared Watch Trailer logic ───────────────────────────────────
+window.handleWatch = async function(title, year = null) {
+  window.showToast('Loading trailer...', 'success');
+  try {
+    let url = `/api/watch/?title=${encodeURIComponent(title)}`;
+    if (year && year !== 'N/A') url += `&year=${encodeURIComponent(year)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.url) {
+      window.closeSharedModal();
+      window._showWatchPlayer(data, title);
+    } else {
+      window.showToast(data.message || 'No trailer found', 'remove');
+    }
+  } catch {
+    window.showToast('Unable to load trailer', 'remove');
+  }
+};
+
 // ─── Misc utils ───────────────────────────────────────────────────
 window.getCookie = function getCookie(name) {
   let value = null;
@@ -242,3 +261,249 @@ window.getPoster = function getPoster(movie) {
     ? movie.poster_url
     : window.PLACEHOLDER;
 };
+// ─── Shared Movie Detail Modal ─────────────────────────────────────────────
+window._sharedModalCache = {
+  elements: null,
+  currentMovieId: null,
+  backdropCache: new Map(),
+  abortController: null,
+};
+
+window._getModalElements = function() {
+  if (!window._sharedModalCache.elements) {
+    window._sharedModalCache.elements = {
+      modal:        document.getElementById('movieModal'),
+      title:        document.getElementById('modalTitle'),
+      overview:     document.getElementById('modalOverview'),
+      meta:         document.getElementById('modalMeta'),
+      img:          document.getElementById('modalImg'),
+      watchlistBtn: document.getElementById('modalWatchlistBtn'),
+      recommendBtn: document.getElementById('modalRecommendBtn'),
+    };
+  }
+  return window._sharedModalCache.elements;
+};
+
+window._applyBackdropWithFade = function(imgEl, url) {
+  const preload = new Image();
+  preload.onload = () => {
+    imgEl.style.transition = 'opacity 0.2s ease';
+    imgEl.style.opacity = '0';
+    setTimeout(() => {
+      imgEl.src = url;
+      imgEl.style.objectFit = 'cover';
+      imgEl.style.objectPosition = 'center top';
+      imgEl.style.opacity = '1';
+    }, 200);
+  };
+  preload.src = url;
+};
+
+window.openSharedModal = function(movie, watchlistIds, onWatchlistChange) {
+  const el = window._getModalElements();
+  const cache = window._sharedModalCache;
+  if (!el.modal) return;
+
+  if (cache.abortController) cache.abortController.abort();
+  cache.abortController = new AbortController();
+
+  const genre  = window.parseGenre(movie);
+  const year   = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+  const rating = parseFloat(movie.vote_average || 0).toFixed(1);
+
+  el.title.textContent    = movie.title.toUpperCase();
+  el.overview.textContent = movie.overview || 'No overview available.';
+  el.meta.textContent     = `${genre} • ${year} • ⭐ ${rating}`;
+
+  el.img.style.transition     = 'none';
+  el.img.style.opacity        = '1';
+  el.img.style.objectFit      = 'cover';
+  el.img.style.objectPosition = 'center top';
+  el.img.src = window.getPoster(movie);
+
+  const inList = watchlistIds instanceof Set
+    ? watchlistIds.has(movie.movie_id)
+    : watchlistIds.includes(movie.movie_id);
+
+  el.watchlistBtn.dataset.inList = inList;
+  window._updateModalWatchlistBtn(el.watchlistBtn, inList);
+
+  el.watchlistBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.toggleWatchlist(el.watchlistBtn, movie.movie_id, {
+      isModal: true,
+      onSuccess: (nowInList) => {
+        if (typeof onWatchlistChange === 'function') onWatchlistChange(movie.movie_id, nowInList);
+      }
+    });
+  };
+
+  el.recommendBtn.onclick = () => {
+    window.location.href = `/recommendations/?title=${encodeURIComponent(movie.title)}`;
+  };
+
+  // Watch Trailer button
+  const existingWatchBtn = document.getElementById('modalWatchBtn');
+  if (existingWatchBtn) existingWatchBtn.remove();
+  const watchBtn = document.createElement('button');
+  watchBtn.id = 'modalWatchBtn';
+  watchBtn.className = 'w-full py-4 mb-3 rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 bg-green-600 text-white hover:bg-green-700';
+  watchBtn.innerHTML = `<span class="material-symbols-outlined text-lg">play_circle</span> Watch Trailer`;
+  watchBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.handleWatch(movie.title, year);
+  };
+  const buttonContainer = document.getElementById('modalButtonContainer');
+  if (buttonContainer) buttonContainer.parentNode.insertBefore(watchBtn, buttonContainer);
+
+  // Show modal
+  el.modal.style.visibility = 'visible';
+  el.modal.style.opacity = '1';
+  el.modal.querySelector('.relative.w-full').style.transform = 'scale(1)';
+  document.body.style.overflow = 'hidden';
+  cache.currentMovieId = movie.movie_id;
+
+  // Backdrop fetch
+  const cacheKey = movie.movie_id;
+  if (cache.backdropCache.has(cacheKey)) {
+    const cached = cache.backdropCache.get(cacheKey);
+    if (cached) window._applyBackdropWithFade(el.img, cached);
+    return;
+  }
+
+  fetch(`/api/tmdb-backdrop/?movie_id=${encodeURIComponent(movie.movie_id)}&title=${encodeURIComponent(movie.title)}`, {
+    signal: cache.abortController.signal
+  })
+  .then(r => r.json())
+  .then(data => {
+    cache.backdropCache.set(cacheKey, data.backdrop_url || null);
+    if (data.backdrop_url && cache.currentMovieId === movie.movie_id) {
+      window._applyBackdropWithFade(el.img, data.backdrop_url);
+    }
+  })
+  .catch(err => { if (err.name !== 'AbortError') console.error('Backdrop:', err); });
+};
+
+window.closeSharedModal = function() {
+  const el = window._getModalElements();
+  const cache = window._sharedModalCache;
+  if (!el.modal) return;
+  el.modal.style.opacity = '0';
+  el.modal.style.visibility = 'hidden';
+  el.modal.querySelector('.relative.w-full').style.transform = 'scale(0.95)';
+  document.body.style.overflow = '';
+  cache.currentMovieId = null;
+  if (cache.abortController) { cache.abortController.abort(); cache.abortController = null; }
+  const existingWatchBtn = document.getElementById('modalWatchBtn');
+  if (existingWatchBtn) existingWatchBtn.remove();
+  setTimeout(() => { if (el.modal.style.visibility === 'hidden') el.img.src = ''; }, 300);
+};
+
+// Watch player (shared)
+let youtubeAPILoaded = false;
+function loadYouTubeAPI() {
+  return new Promise((resolve, reject) => {
+    if (youtubeAPILoaded || (window.YT && window.YT.Player)) {
+      youtubeAPILoaded = true;
+      resolve();
+      return;
+    }
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    window.onYouTubeIframeAPIReady = () => {
+      youtubeAPILoaded = true;
+      resolve();
+    };
+    setTimeout(() => reject(new Error('YouTube API timeout')), 5000);
+  });
+}
+
+window._showWatchPlayer = async function(data, title) {
+  const existing = document.getElementById('watchPlayerModal');
+  if (existing) existing.remove();
+
+  const watchModal = document.createElement('div');
+  watchModal.id = 'watchPlayerModal';
+  watchModal.className = 'fixed inset-0 z-[150] flex items-center justify-center bg-black/95 backdrop-blur-md';
+  watchModal.innerHTML = `
+    <button class="absolute top-6 right-6 text-white hover:text-primary-container z-[160] transition-colors" onclick="window.closeWatchPlayer()">
+      <span class="material-symbols-outlined text-4xl">close</span>
+    </button>
+    <div class="relative w-full max-w-6xl h-[80vh] mx-4 bg-black rounded-2xl overflow-hidden shadow-2xl">
+      <div class="absolute top-4 left-4 z-10">
+        <span class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Trailer</span>
+      </div>
+      <div id="sharedYTContainer" class="w-full h-full"></div>
+    </div>`;
+  document.body.appendChild(watchModal);
+  document.body.style.overflow = 'hidden';
+
+  const closeBtn = watchModal.querySelector('button');
+  
+  window.closeWatchPlayer = () => {
+    watchModal.remove();
+    document.body.style.overflow = '';
+    window.removeEventListener('keydown', escHandler);
+  };
+
+  const escHandler = (e) => {
+    if (e.key === 'Escape') window.closeWatchPlayer();
+  };
+  window.addEventListener('keydown', escHandler);
+
+  watchModal.addEventListener('click', (e) => {
+    if (e.target === watchModal) window.closeWatchPlayer();
+  });
+
+  // Extract video ID
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube(?:-nocookie)?\.com\/embed\/)([^&\?\/]+)/,
+  ];
+  let videoId = null;
+  for (const p of patterns) {
+    const m = data.url.match(p);
+    if (m) { videoId = m[1]; break; }
+  }
+
+  const container = document.getElementById('sharedYTContainer');
+  if (videoId) {
+    try {
+      await loadYouTubeAPI();
+      new YT.Player('sharedYTContainer', {
+        height: '100%',
+        width: '100%',
+        videoId: videoId,
+        playerVars: {
+          'autoplay': 1,
+          'modestbranding': 1,
+          'rel': 0
+        },
+        events: {
+          'onError': (e) => {
+            console.error('YT Error:', e.data);
+            container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+          }
+        }
+      });
+    } catch (err) {
+      container.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+    }
+  } else {
+    container.innerHTML = `<iframe src="${data.url}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+  }
+};
+
+// Wire up shared modal close events once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('closeModalBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation(); window.closeSharedModal();
+  });
+  document.getElementById('movieModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'movieModal') window.closeSharedModal();
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') window.closeSharedModal();
+  });
+});

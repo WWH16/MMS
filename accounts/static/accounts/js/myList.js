@@ -4,6 +4,18 @@
  */
 
 let pendingRemoveId = null;
+let myListWatchlistIds = new Set();
+
+window._myListCardClick = function(card, event) {
+  if (event.target.closest('button')) return; // don't open modal when clicking buttons
+  try {
+    const movie = JSON.parse(card.dataset.movie);
+    openSharedModal(movie, myListWatchlistIds, (movieId, nowInList) => {
+      if (nowInList) myListWatchlistIds.add(movieId);
+      else { myListWatchlistIds.delete(movieId); fetchWatchlist(); } // refresh if removed
+    });
+  } catch(e) { console.error(e); }
+};
 
 function openRemoveModal(movieId, movieTitle) {
   pendingRemoveId = movieId;
@@ -96,16 +108,17 @@ function renderMovies(watchlistItems) {
     const poster    = getPoster(movie);
     const rating    = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : '0.0';
     const safeTitle = movie.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const movieData = JSON.stringify(movie).replace(/'/g, "&apos;");
 
     return `
-      <div class="group cursor-pointer">
+      <div class="movie-card group cursor-pointer" data-movie='${movieData}'>
         <div class="aspect-[2/3] rounded-xl overflow-hidden mb-4 bg-surface-container-low relative transition-transform duration-500 ease-out group-hover:scale-[1.02]">
           <img src="${poster}" alt="${movie.title}" class="w-full h-full object-cover"
                onerror="this.src=window.PLACEHOLDER" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 gap-2">
-            <button onclick="event.stopPropagation(); window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'"
-              class="bg-primary-container text-on-primary-container w-full py-2 rounded-lg font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-1">
-              <span class="material-symbols-outlined text-sm">auto_awesome</span> Find Similar
+            <button onclick="event.stopPropagation(); window.handleWatch('${movie.title.replace(/'/g, "\\'")}', '${year}')"
+              class="bg-green-600 text-white w-full py-2 rounded-lg font-bold text-xs hover:bg-green-700 transition-all flex items-center justify-center gap-1">
+              <span class="material-symbols-outlined text-sm">play_circle</span> Watch
             </button>
             <button onclick="event.stopPropagation(); openRemoveModal('${movie.movie_id}', '${safeTitle}')"
               class="bg-surface-bright/80 backdrop-blur-md text-white w-full py-2 rounded-lg font-medium text-xs hover:bg-red-600 transition-all">
@@ -113,7 +126,7 @@ function renderMovies(watchlistItems) {
             </button>
           </div>
         </div>
-        <div class="space-y-1" onclick="window.location.href='/recommendations/?title=${encodeURIComponent(movie.title)}'">
+        <div class="space-y-1">
           <h3 class="font-bold font-headline text-base group-hover:text-primary transition-colors line-clamp-1">${movie.title}</h3>
           <div class="flex items-center gap-3 text-xs font-label text-on-surface-variant">
             <span>${year}</span>
@@ -126,6 +139,11 @@ function renderMovies(watchlistItems) {
         </div>
       </div>`;
   }).join('');
+
+  myListWatchlistIds = new Set(watchlistItems.map(item => {
+    const m = item.movie_details || item.movie;
+    return m.movie_id;
+  }));
 
   grid.innerHTML = html + `
     <div class="group">
@@ -141,6 +159,12 @@ function renderMovies(watchlistItems) {
 document.addEventListener('DOMContentLoaded', () => {
   const token = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
+
+  // Event delegation for movie cards
+  document.getElementById('movieGrid')?.addEventListener('click', (e) => {
+    const card = e.target.closest('.movie-card');
+    if (card) window._myListCardClick(card, e);
+  });
 
   document.getElementById('removeCancelBtn')?.addEventListener('click', closeRemoveModal);
   document.getElementById('removeConfirmBtn')?.addEventListener('click', async () => {
