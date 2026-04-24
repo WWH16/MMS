@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <link rel="icon" href="{% static 'accounts/images/video-player.png' %}" type="image/x-icon">
   <title>{% block title %}ReelMatch{% endblock %}</title>
 
   <!-- Tailwind CDN — must load BEFORE the config script -->
@@ -97,7 +98,10 @@
 
       <!-- Left: Logo + Links -->
       <div class="flex items-center gap-10">
-        <a href="{% url 'homeFeed' %}" class="text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">ReelMatch</a>
+        <a href="{% url 'homeFeed' %}" class="flex items-center gap-2 text-3xl font-black tracking-tighter text-red-600 uppercase font-headline">
+          <img src="{% static 'accounts/images/video-player.png' %}" alt="Logo" class="w-8 h-8">
+          ReelMatch
+        </a>
         <div class="hidden md:flex gap-8 items-center">
           <a class="font-medium font-body transition-colors duration-300 {% if active_page == 'browse' %}text-white font-bold border-b-2 border-red-600 pb-1{% else %}text-gray-400 hover:text-white{% endif %}"
              href="{% url 'homeFeed' %}">Browse</a>
