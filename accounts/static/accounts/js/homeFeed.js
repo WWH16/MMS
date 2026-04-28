@@ -7,7 +7,6 @@ let heroMovieId = null;
 let currentPage = 1;
 let hasNextPage  = false;
 let currentWatchlistIds = new Set();
-let currentIsStaff      = false;
 let allMovies = [];
 
 async function openModal(movie) {
@@ -30,7 +29,7 @@ function _syncCardButtons(movieId, inList) {
 }
 
 // ─── Render helpers ───────────────────────────────────────────────
-function renderMovieCardTemplate(movie, watchlistIds, isStaff) {
+function renderMovieCardTemplate(movie, watchlistIds) {
   const rating     = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : '0.0';
   const genre      = parseGenre(movie);
   const poster     = getPoster(movie);
@@ -40,12 +39,6 @@ function renderMovieCardTemplate(movie, watchlistIds, isStaff) {
   const isPlaceholder = !movie.poster_url || movie.poster_url === 'None' || movie.poster_url === 'nan';
   const imgClass   = isPlaceholder ? 'w-full h-full object-cover poster-placeholder-small' : 'w-full h-full object-cover';
 
-  const adminActions = isStaff ? `
-    <div class="absolute top-4 right-4 flex flex-col gap-2 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 z-30">
-      <button onclick="event.stopPropagation();" class="bg-surface-container-high/90 backdrop-blur-sm p-2 rounded-full text-on-surface hover:text-primary-container"><span class="material-symbols-outlined text-xl">edit</span></button>
-      <button onclick="event.stopPropagation();" class="bg-error-container/90 backdrop-blur-sm p-2 rounded-full text-white hover:bg-error transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
-    </div>` : '';
-
   return `
     <div class="movie-card group relative aspect-[2/3] rounded-xl overflow-hidden bg-surface-container-low transition-all duration-500 hover:scale-[1.03] hover:z-20 cursor-pointer"
          data-movie='${movieData}'
@@ -53,7 +46,6 @@ function renderMovieCardTemplate(movie, watchlistIds, isStaff) {
       <img class="${imgClass}" src="${poster}" alt="${movie.title}" loading="lazy"
            onerror="this.src=window.PLACEHOLDER; this.classList.add('poster-placeholder-small')" />
       <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      ${adminActions}
       <div class="absolute bottom-0 left-0 w-full p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 space-y-2 z-10">
         <p class="text-white font-headline font-bold truncate text-sm md:text-base">${movie.title.toUpperCase()}</p>
         <p class="text-neutral-400 text-[10px] font-label font-medium">${genre} • ${year} • ⭐ ${rating}</p>
@@ -83,14 +75,14 @@ window._cardWatchlistClick = function(btn, movieId) {
   });
 };
 
-function renderGrid(movies, watchlistIds, isStaff) {
+function renderGrid(movies, watchlistIds) {
   const grid = document.getElementById('movieGrid');
-  if (grid) grid.innerHTML = movies.map(m => renderMovieCardTemplate(m, watchlistIds, isStaff)).join('');
+  if (grid) grid.innerHTML = movies.map(m => renderMovieCardTemplate(m, watchlistIds)).join('');
 }
 
-function appendGrid(movies, watchlistIds, isStaff) {
+function appendGrid(movies, watchlistIds) {
   const grid = document.getElementById('movieGrid');
-  if (grid) grid.insertAdjacentHTML('beforeend', movies.map(m => renderMovieCardTemplate(m, watchlistIds, isStaff)).join(''));
+  if (grid) grid.insertAdjacentHTML('beforeend', movies.map(m => renderMovieCardTemplate(m, watchlistIds)).join(''));
 }
 
 function renderTopRatedCarousel(movies) {
@@ -336,9 +328,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const token   = window.getAuthToken();
   if (!token) { window.location.href = '/signin/'; return; }
   
-  const isStaff = window.getAuthIsStaff();
-  currentIsStaff = isStaff;
-
   // Refresh random
   document.getElementById('refreshRandomBtn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refreshRandomBtn');
@@ -408,7 +397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const heroMovie = heroPool[Math.floor(Math.random() * heroPool.length)];
   await renderHero(heroMovie, currentWatchlistIds);
 
-  renderGrid(movies, currentWatchlistIds, isStaff);
+  renderGrid(movies, currentWatchlistIds);
   document.getElementById('loadMoreBtn').style.display = hasNextPage ? 'block' : 'none';
 
   // Card click delegation
@@ -434,7 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data    = await fetchMovies(token, e.target.value.trim(), 1);
       const results = data.results || data;
       hasNextPage   = data.has_next;
-      renderGrid(results, currentWatchlistIds, currentIsStaff);
+      renderGrid(results, currentWatchlistIds);
       applyFilters();
       document.getElementById('loadMoreBtn').style.display = hasNextPage ? 'block' : 'none';
     }, 300);
@@ -448,7 +437,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.textContent = 'LOADING...';
     currentPage++;
     const data = await fetchMovies(token, query, currentPage);
-    appendGrid(data.results || data, currentWatchlistIds, currentIsStaff);
+    appendGrid(data.results || data, currentWatchlistIds);
     applyFilters();
     hasNextPage = data.has_next;
     btn.style.display = hasNextPage ? 'block' : 'none';

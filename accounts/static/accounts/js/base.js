@@ -13,17 +13,11 @@
 // ─── Auth bootstrap ────────────────────────────────────────────────
 window.getAuthToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
 window.getAuthUser  = () => localStorage.getItem('username') || sessionStorage.getItem('username') || 'User';
-window.getAuthIsStaff = () => (localStorage.getItem('is_staff') || sessionStorage.getItem('is_staff')) === 'true';
 
 document.addEventListener('DOMContentLoaded', () => {
   const username = window.getAuthUser();
-  const isStaff  = window.getAuthIsStaff();
 
   document.querySelectorAll('#userDisplay').forEach(el => el.textContent = username);
-  if (isStaff) {
-    document.querySelectorAll('#userRole').forEach(el => el.textContent = 'Administrator');
-    document.getElementById('addMovieLink')?.classList.remove('hidden');
-  }
 
 // ── Sign-out modal ────────────────────────────────────────
   const signoutModal    = document.getElementById('signoutModal');

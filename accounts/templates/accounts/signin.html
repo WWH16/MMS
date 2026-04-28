@@ -223,15 +223,12 @@
             
             // Clear both first to avoid stale data in the other storage
             localStorage.removeItem('token');
-            localStorage.removeItem('is_staff');
             localStorage.removeItem('username');
             sessionStorage.removeItem('token');
-            sessionStorage.removeItem('is_staff');
             sessionStorage.removeItem('username');
 
             // Set new data
             storage.setItem('token', data.token);
-            storage.setItem('is_staff', data.is_staff);
             storage.setItem('username', data.username);
 
             if (rememberMe) {

@@ -64,7 +64,6 @@ def signup_view(request):
                 token = Token.objects.create(user=user)
                 return Response({
                     "token": token.key,
-                    "is_staff": user.is_staff,
                     "username": user.username
                 }, status=status.HTTP_201_CREATED)
         except Exception:
@@ -109,30 +108,9 @@ def login_view(request):
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
             "token": token.key,
-            "is_staff": user.is_staff,
             "username": user.username
         }, status=status.HTTP_200_OK)
     return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-@api_view(['GET', 'POST'])
-def movie_list(request):
-    """
-    Legacy non-paginated movie list (kept for backward-compat).
-    Staff-only POST to add a movie directly.
-    """
-    if request.method == 'GET':
-        movies = Movies.objects.all()
-        serializer = MovieSerializer(movies, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        if not request.user.is_staff:
-            return Response({"error": "Only admins can add movies"}, status=status.HTTP_403_FORBIDDEN)
-        serializer = MovieSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ── Movies ────────────────────────────────────────────────────────────────────

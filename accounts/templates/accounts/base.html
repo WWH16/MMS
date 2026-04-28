@@ -109,7 +109,6 @@
              href="{% url 'myList' %}">My List</a>
           <a class="font-medium font-body transition-colors duration-300 {% if active_page == 'recommendations' %}text-white font-bold border-b-2 border-red-600 pb-1{% else %}text-gray-400 hover:text-white{% endif %}"
              href="{% url 'recommendations' %}">Recommendations</a>
-          <a id="addMovieLink" class="hidden text-gray-400 font-medium font-body hover:text-white transition-colors duration-300" href="#">Add Movie</a>
         </div>
       </div>
 
@@ -127,7 +126,6 @@
           <div class="absolute right-0 mt-2 w-48 bg-surface-container-high backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60]">
             <div class="p-4 border-b border-white/5">
               <p id="userDisplay" class="text-sm font-bold text-on-surface truncate">User</p>
-              <p id="userRole" class="text-[10px] uppercase tracking-widest text-neutral-500">Member</p>
             </div>
             <div class="p-2">
               <button id="logoutBtn" class="w-full flex items-center gap-3 px-3 py-2 text-sm text-primary-container hover:bg-primary-container/10 rounded-lg transition-colors">
