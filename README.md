@@ -3,7 +3,7 @@
 **ReelMatch** is an AI-powered movie recommendation web application built with **Django** and **Django REST Framework**. It uses a content-based filtering model trained on movie metadata — genres, directors, and cast — to surface films tailored to your preferences.
 
 > 📸 **Image suggestion:** Add a hero screenshot of the home/browse page here.
-> `![ReelMatch Browse Page](docs/images/homepage.png)`
+![ReelMatch Browse Page](./docs/images/homepage.png)
 
 ---
 
@@ -365,23 +365,6 @@ Authorization: Token <your_token>
 - [ ] Model retraining pipeline triggered by new data imports.
 - [ ] Dockerize for production deployment.
 - [ ] Add pagination/infinite scroll to the recommendations grid.
-
----
-
-## Where to Add Images
-
-Here is a quick checklist of the three spots in this README where a screenshot or diagram would make the biggest difference:
-
-1. **Top of file** — A full-width hero screenshot of the Browse page (`/homeFeed/`) showing the movie grid and hero banner. Paste it right below the project title.
-
-2. **ML Engine section** — A simple pipeline diagram: `CSV → Feature String → TF-IDF Matrix → Cosine Similarity → Ranked Results`. You can draw this in Excalidraw, Figma, or even a quick sketch. Save as `docs/images/ml_pipeline.png`.
-
-3. **Pages & UI section** — A 2×2 or 2×3 grid of screenshots covering the main pages. Capture them with browser devtools in a consistent viewport (e.g. 1440px wide) for a clean look.
-
-To add images, create a `docs/images/` folder in your repo root, place the files there, and use standard Markdown syntax:
-```markdown
-![Alt text](docs/images/your-image.png)
-```
 
 ---
 
