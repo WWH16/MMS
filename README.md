@@ -3,7 +3,7 @@
 **ReelMatch** is an AI-powered movie recommendation web application built with **Django** and **Django REST Framework**. It uses a content-based filtering model trained on movie metadata — genres, directors, and cast — to surface films tailored to your preferences.
 
 > 📸 **Image suggestion:** Add a hero screenshot of the home/browse page here.
-![ReelMatch Browse Page](./docs/images/homepage.png)
+![ReelMatch Browse Page](docs/images/browse1.png)
 
 ---
 
@@ -328,14 +328,29 @@ Authorization: Token <your_token>
 ```
 
 ---
+## 📸 Pages & UI
 
-## Pages & UI
+### 🎬 Browse Page
 
-> 📸 **Image suggestion:** A 2×2 grid of screenshots (Browse, Recommendations, My List, Sign-in) would be ideal here.
-> ```
-> ![UI Screenshots](docs/images/ui-grid.png)
-> ```
+| Hero Section | Top Rated Carousel                                                                     |
+|--------------|----------------------------------------------------------------------------------------|
+| <a href="docs/images/browse1.png"><img src="docs/images/browse1.png" width="300"/></a> | <a href="docs/images/browse2.png"><img src="docs/images/browse2.png" width="300"/></a> |
 
+| Search / Filter | Movie Grid |
+|-----------------|------------|
+| <a href="docs/images/browse3.png"><img src="docs/images/browse3.png" width="300"/></a> | <a href="docs/images/browse4.png"><img src="docs/images/browse4.png" width="300"/></a> |
+
+---
+
+### 📄 Other Pages
+
+| Recommendations | My List |
+|----------------|--------|
+| <a href="docs/images/recommendations.png"><img src="docs/images/recommendations.png" width="300"/></a> | <a href="docs/images/mylist.png"><img src="docs/images/mylist.png" width="300"/></a> |
+
+| Sign In | Sign Up |
+|--------|--------|
+| <a href="docs/images/signin.png"><img src="docs/images/signin.png" width="300"/></a> | <a href="docs/images/signup.png"><img src="docs/images/signup.png" width="300"/></a> |
 | Page | URL | Description |
 |---|---|---|
 | **Landing** | `/` | Marketing page with feature highlights and sign-up CTA |
