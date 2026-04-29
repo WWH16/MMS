@@ -25,7 +25,6 @@
 * Secure authentication with reCAPTCHA v3
 * Movie discovery with search, filters, and pagination
 * Content-based recommendation engine using TF-IDF + cosine similarity
-* Personal watchlist with full CRUD support
 * TMDB integration for posters, backdrops, and metadata
 * YouTube trailer playback
 * Responsive UI using Tailwind CSS
