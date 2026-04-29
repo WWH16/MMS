@@ -15,7 +15,6 @@
 * Database & Data Import
 * ML Recommendation Engine
 * API Reference
-* Roadmap
 * License
 
 ---
